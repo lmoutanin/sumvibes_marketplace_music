@@ -19,8 +19,9 @@ export async function GET(request: NextRequest) {
             where.OR = [
                 { title: { contains: searchQuery, mode: "insensitive" } },
                 { description: { contains: searchQuery, mode: "insensitive" } },
-                { seller: { artistName: { contains: searchQuery, mode: "insensitive" } } },
-                { seller: { user: { username: { contains: searchQuery, mode: "insensitive" } } } }
+                { seller: { sellerProfile: { artistName: { contains: searchQuery, mode: "insensitive" } } } },
+                { seller: { username: { contains: searchQuery, mode: "insensitive" } } },
+                { seller: { displayName: { contains: searchQuery, mode: "insensitive" } } }
             ];
         }
 
