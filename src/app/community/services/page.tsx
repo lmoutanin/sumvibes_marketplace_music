@@ -273,9 +273,9 @@ function ServiceCard({ service, featured }: { service: any; featured?: boolean }
           <div className="text-brand-gold font-bold text-xl drop-shadow-md">€{service.price?.toString()}</div>
         </div>
         <div className="flex gap-2">
-          <button className="w-10 h-10 rounded-xl glass bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white hover:text-brand-gold border border-white/10 hover:border-brand-gold/30">
+          <Link href={`/community/messages?new=${service.sellerId}`} className="w-10 h-10 rounded-xl glass bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white hover:text-brand-gold border border-white/10 hover:border-brand-gold/30">
             <MessageSquare className="w-4 h-4" />
-          </button>
+          </Link>
           <Link href={`/community/services/${service.id}`} className="w-10 h-10 rounded-xl btn-primary flex items-center justify-center transition-all shadow-md group-hover:shadow-[0_4px_15px_rgba(254,204,51,0.4)]">
             <ArrowRight className="w-5 h-5 text-black" />
           </Link>

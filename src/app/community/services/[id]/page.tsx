@@ -106,9 +106,9 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
                                 <button className="w-full btn-primary px-6 py-4 rounded-xl font-bold shadow-lg hover:scale-105 transition-all text-black mb-3 text-lg">
                                     Commander
                                 </button>
-                                <button className="w-full bg-white/10 hover:bg-white/15 px-6 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors border border-white/10 text-white">
-                                    <MessageSquare className="w-5 h-5" /> Contacter le prestataire
-                                </button>
+                                <Link href={`/community/messages?new=${service.sellerId}`} className="w-full bg-white/10 hover:bg-white/15 px-6 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors border border-white/10 text-white group">
+                                    <MessageSquare className="w-5 h-5 group-hover:text-brand-gold transition-colors" /> Contacter le prestataire
+                                </Link>
                             </div>
 
                             {/* Author Card */}
