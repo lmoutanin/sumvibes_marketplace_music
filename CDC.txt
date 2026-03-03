@@ -1,0 +1,110 @@
+Cahier des charges — Création de site type marketplace
+Projet : SUMVIBES
+Date : [JJ/MM/AAAA]
+Commanditaire : SAS BE GREAT
+Contact Xavier JARVIS (sumgoodthin@gmail.com / +590 691 27 20 15
+1. Résumé
+Notre projet est de créer une plateforme de vente autour de la production musicale.
+Elle est destinée aux compositeurs, aux artistes et tout acteur du domaine via plusieurs
+formules et niveaux d'abonnement (3 vendeurs / 2 acheteurs).
+L’objectif est de permettre la mise en ligne, l'écoute, la vente de compositions dans un
+espace sécurisés pour les passionnés.
+2. Fonctionnalités principales
+- Inscription de l’utilisateur (compositeur/vendeur et artistes-labels/acheteurs), mise en
+ligne et vente de production musicale (préviews + fichiers téléchargeables)
+Proposer dès cette page le role de l’utilisateur.
+- Gestion comptes vendeurs/acheteurs, paiements et reversements, statistiques, flux, ...
+- Tableau de bord vendeur (statistiques, retraits)
+- Processus simple et responsive (mobile-first)
+- Gestion simplifiée et autonome
+3. Périmètre fonctionnel
+- Catalogue avec filtres (genre, BPM, prix, ambiance, instruments, …)
+- Fiche produit : preview audio, visuel, licences, prix
+- Panier / paiement sécurisé (Stripe / PayPal / Commissions) + envoi facture PDF
+- Espace vendeur : upload fichiers, gestion produits, gestion des licences, demandes de
+retrait
+- Espace acheteur : accès au catalogue, filtre, licences et fichiers achetés
+- Back‑office admin : gestion utilisateurs, modération, rapports statistiques, gestion des
+commissions
+- Messagerie
+4. Points importants
+- Hébergement sécurisé (HTTPS): [A l’écoute de proposition par le développeur, basé sur la
+qualité et le prix]
+- Conformité RGPD (consentements, droit d’accès)
+- Performance : chargement rapide, streaming audio fluide
+- Responsive (mobile / desktop) et bonnes pratiques d’accessibilité
+5. Intégration
+- Paiement : Stripe, PayPal
+- Gestion des commissions
+- Stockage : [A l’écoute de proposition basé sur la qualité et le prix]
+- Emailing transactionnel
+- Analytics
+6. Budget
+- Budget (approximatif et à discuter) : ~4000€
+EBAUCHE D’ARBORESCENCE
+/ (Accueil)
+│
+├── Catalogue
+│ ├── Tous les beats
+│ ├── Par style
+│ ├── Par BPM
+│ └── Pages de filtres dynamiques
+│
+├── Producteurs / Artistes
+│ ├── Listing de profils
+│ └── Profil individuel
+│ ├── Bio & photo
+│ ├── Beats à vendre
+│ └── Statistiques publiques (ventes, likes…)
+│
+├── Mon compte (Submissions)
+│ ├── Dashboard personnel
+│ │ ├── Ventes récentes
+│ │ ├── Revenus & commissions
+│ │ └── Gestion des beats (ajout / modification / gestion licences)
+│ ├── Paramètres de compte
+│ └── Historique des téléchargements & licences
+│
+├── Produit individuel
+│ ├── Player audio (streaming preview)
+│ ├── Description & métadonnées (BPM, style, mood…)
+│ ├── Choix de licence
+│ └── Bouton d’achat
+│
+├── Panier & Paiement
+│ ├── Récapitulatif
+│ └── Passage en caisse (Stripe/PayPal)
+│ ├── Page de confirmation
+│ └── Liens de téléchargement + PDF de licence
+│
+├── Communication
+│ ├── Forum de discussion (Petites annonces de service)
+│ ├── Messagerie instantané
+│
+└── Blog / News
+├── Articles
+└── Catégories
+Ebauche Wireframes
+1. Page d’accueil
+• Bandeau “Nouveautés”
+• Carrousel “Top producteurs / Top beats”
+• Accès rapide / Mon compte
+2. Catalogue
+• Grille de beats avec aperçu audio
+• Filtres latéraux (style, BPM, prix, producteur)
+3. Page Produit
+• Player, métadonnées
+• Sélecteur de licence + prix
+• Call-to-action “Acheter”
+4. Communication
+• Forum de discussion (Modèle X / Twitter)
+• Petites annonces de service (Songwriting, toplining, mixage, …)
+• Messagerie instantanée
+5. Dashboard Producteur
+• Graphique de ventes
+• Liste des beats uploadés avec statut (publié/brouillon)
+• Bouton “Ajouter un beat”
+6. Checkout & Confirmation
+• Formulaire de paiement épuré
+• Téléchargement automatique d’un dossier (fichier acheté +
+Licence d’utilisation au format PDF)
