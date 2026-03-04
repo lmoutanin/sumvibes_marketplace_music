@@ -22,6 +22,7 @@ import {
   Mail,
   ChevronLeft,
   Phone,
+  Home,
   Instagram,
   Twitter,
   Youtube,
@@ -92,6 +93,9 @@ export default function SettingsPage() {
       twitter: formData.get("twitter") as string,
       youtube: formData.get("youtube") as string,
       country: formData.get("country") as string,
+      address: formData.get("address") as string,
+      city: formData.get("city") as string,
+      postalCode: formData.get("postalCode") as string,
     };
 
     try {
@@ -470,6 +474,42 @@ export default function SettingsPage() {
                     type="tel"
                     defaultValue={user.phone ?? ""}
                     placeholder="+33 6 12 34 56 78"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-300 mb-2 block flex items-center gap-2">
+                    <Home className="w-4 h-4" /> Adresse
+                  </label>
+                  <input
+                    name="address"
+                    type="text"
+                    defaultValue={user.address ?? ""}
+                    placeholder="12 rue Exemple, 75000 Paris"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-300 mb-2 block flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> Ville
+                  </label>
+                  <input
+                    name="city"
+                    type="text"
+                    defaultValue={user.city ?? ""}
+                    placeholder="Paris"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-300 mb-2 block flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> Code postal
+                  </label>
+                  <input
+                    name="postalCode"
+                    type="text"
+                    defaultValue={user.postalCode ?? ""}
+                    placeholder="75000"
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold/50"
                   />
                 </div>

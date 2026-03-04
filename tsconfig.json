@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "src/lib/pdfkit-invoice/createInvoice.js"  ],
   "exclude": ["node_modules"]
 }

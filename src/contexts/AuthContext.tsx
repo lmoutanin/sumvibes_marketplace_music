@@ -17,6 +17,9 @@ interface User {
   twitter?: string | null;
   youtube?: string | null;
   country?: string | null;
+  address?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
   avatar?: string | null;
   createdAt?: string;
   twoFactorEnabled?: boolean;

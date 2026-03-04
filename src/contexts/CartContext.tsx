@@ -5,6 +5,7 @@ import { compare } from 'bcryptjs';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface CartItem {
+  licenseType: null;
   id: string;
   beat: {
     id: string;

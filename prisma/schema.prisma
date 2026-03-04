@@ -48,6 +48,9 @@ model User {
   twitter       String?
   youtube       String?
   country       String?
+  address       String?
+  city          String?
+  postalCode    String?
   
   // Verification & Security
   emailVerified Boolean     @default(false)

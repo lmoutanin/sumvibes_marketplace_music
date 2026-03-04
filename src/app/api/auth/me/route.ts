@@ -32,6 +32,9 @@ export async function GET(req: NextRequest) {
         twitter: true,
         youtube: true,
         country: true,
+        address: true,
+        city: true,
+        postalCode: true,
         twoFactorEnabled: true,
         notificationPrefs: true,
         musicPrefs: true,
@@ -79,7 +82,7 @@ export async function PUT(req: NextRequest) {
 
     const body = await req.json();
     const { 
-      firstName, lastName, displayName, email, bio, website, phone, instagram, twitter, youtube, country,
+      firstName, lastName, displayName, email, bio, website, phone, instagram, twitter, youtube, country, address, city, postalCode,
       twoFactorEnabled, notificationPrefs, musicPrefs,
       artistName, description, genres, paypalEmail 
     } = body;
@@ -111,6 +114,9 @@ export async function PUT(req: NextRequest) {
         twitter,
         youtube,
         country,
+        address,
+        city,
+        postalCode,
         // Only update these if they are explicitly sent in the payload
         ...(twoFactorEnabled !== undefined && { twoFactorEnabled }),
         ...(notificationPrefs !== undefined && { notificationPrefs }),
@@ -131,6 +137,9 @@ export async function PUT(req: NextRequest) {
         twitter: true,
         youtube: true,
         country: true,
+        address: true,
+        city: true,
+        postalCode: true,
         twoFactorEnabled: true,
         notificationPrefs: true,
         musicPrefs: true,
