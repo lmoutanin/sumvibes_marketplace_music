@@ -77,7 +77,7 @@ export default function AccountPage() {
           ...prev,
           totalPurchases: purchasesData.total || 0,
           totalDownloads: purchasesData.total || 0,
-          totalSpent: purchasesData.purchases?.reduce((sum: number, p: Purchase) => sum + p.amount, 0) || 0,
+          totalSpent: purchasesData.purchases?.reduce((sum: number, p: Purchase) => sum + Number(p.amount), 0) || 0,
         }));
       }
 
@@ -99,7 +99,7 @@ export default function AccountPage() {
     { label: "Achats", value: stats.totalPurchases.toString(), icon: ShoppingBag, color: "text-brand-gold" },
     { label: "Downloads", value: stats.totalDownloads.toString(), icon: Download, color: "text-green-400" },
     { label: "Favoris", value: stats.totalFavorites.toString(), icon: Heart, color: "text-red-400" },
-    { label: "Dépensé", value: `${stats.totalSpent.toFixed(0)}€`, icon: CreditCard, color: "text-blue-400" },
+    { label: "Dépensé", value: `${Number(stats.totalSpent).toFixed(0)}€`, icon: CreditCard, color: "text-blue-400" },
   ];
 
   if (!user) {
@@ -199,7 +199,7 @@ export default function AccountPage() {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm">{purchase.beat.title}</h4>
                         <p className="text-xs text-slate-400">
-                          {purchase.beat.seller.displayName || purchase.beat.seller.username} · {purchase.beat.genre}
+                          {purchase.beat.seller?.displayName || purchase.beat.seller?.username} · {purchase.beat.genre}
                         </p>
                       </div>
                       <div className="hidden md:block text-right">
@@ -210,7 +210,7 @@ export default function AccountPage() {
                           <Clock className="w-3 h-3" /> {new Date(purchase.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </div>
                       </div>
-                      <div className="text-brand-gold font-bold text-sm">{purchase.amount.toFixed(2)}€</div>
+                      <div className="text-brand-gold font-bold text-sm">{Number(purchase.amount).toFixed(2)}€</div>
                       <button className="btn-primary px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1">
                         <Download className="w-4 h-4" />
                       </button>

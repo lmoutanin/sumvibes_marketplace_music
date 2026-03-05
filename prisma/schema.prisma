@@ -309,7 +309,7 @@ model Purchase {
   downloadExpiresAt DateTime?
   
   // Invoice & Contract
-  invoiceNumber     String         @unique
+  invoiceNumber     String
   invoicePdfUrl     String?
   contractPdfUrl    String?
   

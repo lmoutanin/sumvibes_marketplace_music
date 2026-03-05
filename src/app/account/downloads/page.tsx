@@ -15,7 +15,7 @@ interface Purchase {
     genre: string[]; bpm: number; key: string | null; coverImage: string | null;
     seller: { sellerProfile: { artistName: string } | null; displayName: string | null; username: string };
   };
-  license: { id: string; name: string; includesWav: boolean; includesStems: boolean; includesMp3: boolean };
+  license: { id: string; name: string; type: string };
 }
 
 export default function DownloadsPage() {
@@ -48,13 +48,17 @@ export default function DownloadsPage() {
   );
 
   const filtered = purchases.filter(p => {
-    const name = p.beat.seller.sellerProfile?.artistName || p.beat.seller.displayName || p.beat.seller.username;
+    const name = p.beat.seller?.sellerProfile?.artistName || p.beat.seller?.displayName || p.beat.seller?.username || "";
     const matchSearch = !search || p.beat.title.toLowerCase().includes(search.toLowerCase()) || name.toLowerCase().includes(search.toLowerCase());
     const matchLicense = licenseFilter === "all" || p.license.name.toLowerCase().includes(licenseFilter);
     return matchSearch && matchLicense;
   });
 
-  const getFormat = (l: Purchase["license"]) => [l.includesMp3 && "MP3", l.includesWav && "WAV", l.includesStems && "Stems"].filter(Boolean).join(" + ") || "MP3";
+  const getFormat = (l: Purchase["license"]) => {
+    if (l.type === "EXCLUSIVE") return "WAV + Stems";
+    if (l.type === "PREMIUM") return "WAV + MP3";
+    return "MP3";
+  };
 
   return (
     <div className="relative min-h-screen bg-gradient-premium"><Navbar />
@@ -96,7 +100,7 @@ export default function DownloadsPage() {
           ) : (
             <div className="space-y-4">
               {filtered.map(item => {
-                const producerName = item.beat.seller.sellerProfile?.artistName || item.beat.seller.displayName || item.beat.seller.username;
+                const producerName = item.beat.seller?.sellerProfile?.artistName || item.beat.seller?.displayName || item.beat.seller?.username || "Producteur inconnu";
                 const isExclusive = item.license.name.toLowerCase().includes("exclusive");
                 const isPremium = item.license.name.toLowerCase().includes("premium");
                 return (

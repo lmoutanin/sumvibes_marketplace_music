@@ -13,19 +13,23 @@ const invoice = {
     {
       item: 'TC 100',
       description: 'Toner Cartridge',
-      quantity: 2,
-      amount: 6000,
+      quantity: 1,
+      amount: 60,
     },
     {
       item: 'USB_EXT',
       description: 'USB Cable Extender',
       quantity: 1,
-      amount: 2000,
+      amount: 20,
     },
   ],
-  subtotal: 8000,
-  paid: 0,
-  invoice_nr: 1234,
+  payment: {
+    subtotal: 80.20,
+    tax: 20.02,
+    total: 100.22,
+    invoice_nr: 1234,
+  }
 };
+
 
 createInvoice(invoice, "invoice.pdf");

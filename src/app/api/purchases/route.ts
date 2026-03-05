@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { generateInvoiceNumber } from "@/lib/auth";
 import { LicenseType, PaymentMethod } from "@prisma/client";
+import { count } from "console";
+import { base, sub } from "framer-motion/client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,6 +31,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Transaction atomique pour créer licences + achats + stats
+    const sharedInvoiceNumber = generateInvoiceNumber();
+    const invoiceItems: any[] = [];
+    let invoiceSubtotal = 0;
+    let invoiceTax = 0;
+    let invoiceUser: any = null;
+
     const purchases = await prisma.$transaction(async (tx) => {
       const results = [];
 
@@ -82,7 +90,7 @@ export async function POST(req: NextRequest) {
             sellerEarnings,
             paymentMethod: data.paymentMethod as PaymentMethod,
             paymentStatus: "COMPLETED",
-            invoiceNumber: generateInvoiceNumber(),
+            invoiceNumber: sharedInvoiceNumber,
             stripePaymentId: data.stripePaymentIntentId || null,
             paypalTransactionId: data.paypalTransactionId || null,
           },
@@ -110,11 +118,55 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        // Accumuler les données de facture
+        invoiceItems.push({
+          item: beat.title,
+          description: beat.description || "",
+          quantity: 1,
+          amount: priceHT,
+        });
+        invoiceSubtotal += priceHT;
+        invoiceTax += taxAmount;
+
+        if (!invoiceUser) {
+          invoiceUser = await tx.user.findUnique({ where: { id: decoded.userId } });
+        }
+
         results.push(purchase);
       }
 
       return results;
     });
+
+    // Envoyer UNE SEULE facture après la transaction
+    if (invoiceUser && invoiceItems.length > 0) {
+      const shipping = {
+        name: (invoiceUser.firstName || "") + " " + (invoiceUser.lastName || ""),
+        email: invoiceUser.email,
+        address: invoiceUser.address,
+        city: invoiceUser.city,
+        postalCode: invoiceUser.postalCode,
+        country: invoiceUser.country,
+      };
+      const payment = {
+        subtotal: Number(invoiceSubtotal.toFixed(2)),
+        tax: Number(invoiceTax.toFixed(2)),
+        total: Number((invoiceSubtotal + invoiceTax).toFixed(2)),
+        invoice_nr: sharedInvoiceNumber,
+      };
+
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+      await fetch(`${baseUrl}/api/invoice`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ shipping, items: invoiceItems, payment }),
+      });
+
+      console.log("Invoice sent:", sharedInvoiceNumber, invoiceItems.length, "items");
+    }
 
     return NextResponse.json({ purchases }, { status: 201 });
   } catch (error) {
@@ -156,6 +208,15 @@ export async function GET(req: NextRequest) {
               bpm: true,
               key: true,
               genre: true,
+              seller: {
+                select: {
+                  username: true,
+                  displayName: true,
+                  sellerProfile: {
+                    select: { artistName: true },
+                  },
+                },
+              },
             },
           },
           license: {

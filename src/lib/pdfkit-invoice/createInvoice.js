@@ -1,21 +1,28 @@
-const fs = require("fs");
-const PDFDocument = require("pdfkit");
+const path = require("path");
+const PDFDocumentLib = require("pdfkit");
+const PDFDocument = PDFDocumentLib.default || PDFDocumentLib;
 
-function createInvoice(invoice, path) {
-  let doc = new PDFDocument({ size: "A4", margin: 50 });
+function createInvoiceBuffer(invoice) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const chunks = [];
 
-  generateHeader(doc);
-  generateCustomerInformation(doc, invoice);
-  generateInvoiceTable(doc, invoice);
-  generateFooter(doc);
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
 
-  doc.end();
-  doc.pipe(fs.createWriteStream(path));
+    generateHeader(doc);
+    generateCustomerInformation(doc, invoice);
+    generateInvoiceTable(doc, invoice);
+    generateFooter(doc);
+
+    doc.end();
+  });
 }
 
 function generateHeader(doc) {
   doc
-    .image("logo.png", 50, 45, { width: 50 })
+    .image(path.join(process.cwd(), "public", "logo.png"), 50, 45, { width: 50 })
     .fillColor("#444444")
     .fontSize(20)
     .text("SUMVIBES", 110, 57)
@@ -30,7 +37,7 @@ function generateCustomerInformation(doc, invoice) {
   doc
     .fillColor("#444444")
     .fontSize(20)
-    .text("Facture", 50, 160);
+    .text("FACTURE", 50, 160);
 
   generateHr(doc, 185);
 
@@ -38,15 +45,13 @@ function generateCustomerInformation(doc, invoice) {
 
   doc
     .fontSize(10)
-    .text("Numéro de facture:", 50, customerInformationTop)
-    .font("Helvetica-Bold")
-    .text(invoice.invoice_nr, 150, customerInformationTop)
-    .font("Helvetica")
+    .text("Numéro de facture:", 50, customerInformationTop).font("Helvetica-Bold")
+    .text(invoice.payment.invoice_nr, 150, customerInformationTop).font("Helvetica")
     .text("Date de facture:", 50, customerInformationTop + 15)
     .text(new Date().toLocaleDateString("fr"), 150, customerInformationTop + 15)
     .text("Montant:", 50, customerInformationTop + 30)
     .text(
-      formatCurrency(invoice.subtotal - invoice.paid),
+      formatCurrency(invoice.payment.total),
       150,
       customerInformationTop + 30
     )
@@ -57,8 +62,6 @@ function generateCustomerInformation(doc, invoice) {
     .text(invoice.shipping.address, 300, customerInformationTop + 15)
     .text(
       invoice.shipping.city +
-        ", " +
-        invoice.shipping.state +
         ", " +
         invoice.shipping.country,
       300,
@@ -110,7 +113,7 @@ function generateInvoiceTable(doc, invoice) {
     "",
     "Sous-total",
     "",
-    formatCurrency(invoice.subtotal)
+    formatCurrency(invoice.payment.subtotal)
   );
 
   const paidToDatePosition = subtotalPosition + 20;
@@ -121,7 +124,7 @@ function generateInvoiceTable(doc, invoice) {
     "",
     "TVA",
     "",
-    formatCurrency(invoice.paid)
+    formatCurrency(invoice.payment.tax)
   );
 
   const duePosition = paidToDatePosition + 25;
@@ -133,7 +136,7 @@ function generateInvoiceTable(doc, invoice) {
     "",
     "Total",
     "",
-    formatCurrency(invoice.subtotal - invoice.paid)
+    formatCurrency(invoice.payment.total)
   );
   doc.font("Helvetica");
 }
@@ -176,8 +179,8 @@ function generateHr(doc, y) {
     .stroke();
 }
 
-function formatCurrency(cents) {
-  return (cents / 100).toFixed(2) + " €";
+function formatCurrency(amount) {
+  return Number(amount).toFixed(2) + " €";
 }
 
 function formatDate(date) {
@@ -189,5 +192,5 @@ function formatDate(date) {
 }
 
 module.exports = {
-  createInvoice
+  createInvoiceBuffer
 };

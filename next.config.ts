@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Désactiver les source maps en développement pour éviter les chemins Windows malformés
   productionBrowserSourceMaps: false,
+
+  // Exclure les packages Node.js natifs du bundling côté serveur
+  serverExternalPackages: ["pdfkit", "fs"],
   
   turbopack: {
     // Forcer l'utilisation de chemins relatifs dans Turbopack
