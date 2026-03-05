@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X, ShoppingCart, User, LogOut, Settings, Briefcase } from "lucide-react";
+import { Menu, X, ShoppingCart, User, LogOut, Settings, Briefcase, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { set } from "mongoose";
@@ -18,7 +18,24 @@ export function Navbar() {
  
     const { user, loading, logout } = useAuth();
     const { cart } = useCart();
-    
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        if (!user) return;
+        const fetchUnread = () => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+            fetch("/api/messages/unread", {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((r) => r.json())
+                .then((data) => setUnreadCount(data.count ?? 0))
+                .catch(() => {});
+        };
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 30000);
+        return () => clearInterval(interval);
+    }, [user]);
 
     const handleLogout = () => {
         logout();
@@ -67,6 +84,16 @@ export function Navbar() {
                 <div className="hidden items-center gap-4 md:flex">
                     {!loading && (
                         <>
+                            {user && (
+                                <Link href="/community/messages" className="glass p-2 rounded-xl hover:bg-white/10 transition-all relative">
+                                    <Bell className="w-5 h-5" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-brand-pink rounded-full text-xs flex items-center justify-center font-bold">
+                                            {unreadCount > 99 ? "99+" : unreadCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            )}
                             <Link href="/cart" className="glass p-2 rounded-xl hover:bg-white/10 transition-all relative">
                                 <ShoppingCart className="w-5 h-5" />
                                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-pink rounded-full text-xs flex items-center justify-center font-bold">{cart.count}</span>

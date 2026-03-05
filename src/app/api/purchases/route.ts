@@ -245,6 +245,7 @@ export async function GET(req: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
     });
+    
   } catch (error) {
     console.error("Error in GET /api/purchases:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { ChevronLeft, Play, ShoppingCart, Heart, Clock, Music } from "lucide-react";
 import { useBeats } from "@/hooks/useBeats";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/contexts/AuthContext";
+import { LicensePickerModal } from "@/components/catalogue/LicensePickerModal";
 
 const bpmRangesBase = [
   { id: "60-80", label: "60-80 BPM", description: "Ballades, Lo-Fi, Chill", emoji: "🌙", min: 60, max: 79 },
@@ -20,7 +22,37 @@ const bpmRangesBase = [
 export default function BpmPage() {
   const { beats: allBeats, loading } = useBeats({});
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
+  const [licenseTarget, setLicenseTarget] = useState<any | null>(null);
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    fetch("/api/favorites", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => { if (data.favorites) setLikedIds(new Set(data.favorites.map((f: any) => f.beatId))); })
+      .catch(() => {});
+  }, [user]);
+
+  const toggleLike = async (id: string) => {
+    if (!user) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    setLikedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    try {
+      const res = await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ beatId: id }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setLikedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    }
+  };
 
   const bpmRanges = bpmRangesBase.map((range) => {
     const count = allBeats.filter((b) => (b.bpm ?? 0) >= range.min && (b.bpm ?? 0) <= range.max).length;
@@ -118,11 +150,13 @@ export default function BpmPage() {
                         {beat.key && <span>{beat.key}</span>}
                         {beat.duration ? <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {Math.floor(beat.duration / 60)}:{String(beat.duration % 60).padStart(2, "0")}</span> : <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> —</span>}
                       </div>
-                      <button className="glass p-2 rounded-lg hover:bg-white/10"><Heart className="w-4 h-4" /></button>
+                      <button onClick={() => toggleLike(beat.id)} className={`glass p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0 ${likedIds.has(beat.id) ? "text-rose-400" : ""}`}><Heart className={`w-4 h-4 ${likedIds.has(beat.id) ? "fill-current" : ""}`} /></button>
                       <div className="text-brand-gold font-bold text-sm">{Number(beat.basicPrice ?? beat.premiumPrice ?? 0).toFixed(2)}€</div>
-                      <button onClick={() => addToCart(beat.id, "basic")} className="btn-primary px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1">
-                        <ShoppingCart className="w-4 h-4" /> Ajouter
-                      </button>
+                      {user?.id !== beat.seller?.id && (
+                        <button onClick={() => setLicenseTarget(beat)} className="btn-primary px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1">
+                          <ShoppingCart className="w-4 h-4" /> Ajouter
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -152,6 +186,12 @@ export default function BpmPage() {
           © 2026 SUMVIBES by SAS BE GREAT. Tous droits réservés.
         </div>
       </footer>
+
+      <LicensePickerModal
+        beat={licenseTarget}
+        onClose={() => setLicenseTarget(null)}
+        onAdd={addToCart}
+      />
     </div>
   );
 }

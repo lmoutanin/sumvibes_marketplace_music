@@ -4,6 +4,7 @@ import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import {
   Music, Play, Pause, ShoppingCart, Heart, Share2, Download, Clock, Disc,
   Tag, Star, ChevronRight, Check, User, Loader2, AlertCircle
@@ -109,6 +110,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     setIsPlaying(!isPlaying);
   };
 
+  const { addToCart } = useCart();
+
   const handleAddToCart = async () => {
     if (!user) { window.location.href = '/login'; return; }
     if (!beat) return;
@@ -123,18 +126,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
     setAddingToCart(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ beatId: beat.id, licenseType }),
-      });
-      if (res.ok) {
+      const ok = await addToCart(beat.id, licenseType);
+      if (ok) {
         setCartSuccess(true);
         setTimeout(() => setCartSuccess(false), 3000);
       }
-    } catch {
-      // ignore
     } finally {
       setAddingToCart(false);
     }

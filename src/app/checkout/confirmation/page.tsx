@@ -1,17 +1,42 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
-import { CheckCircle, Download, FileText, Music, ArrowRight, Mail } from "lucide-react";
-import { useCart } from "@/contexts/CartContext";
-import { ReactElement, JSXElementConstructor, ReactNode, ReactPortal, Key } from "react";
+import { CheckCircle, Download, FileText, Music, ArrowRight, Mail, Loader2 } from "lucide-react";
+
+interface Purchase {
+  id: string;
+  amount: number;
+  invoiceNumber: string;
+  beat: { title: string; coverImage: string; seller: { sellerProfile: { artistName: string } | null } };
+  license: { name: string; type: string };
+}
 
 export default function CheckoutConfirmationPage() {
-  const cart = useCart();
-  const orderNumber = "INV-2026-0042";
-  const purchases = cart?.cart.items ?? [];
-  const total = cart?.cart?.total* 1.2;
- 
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    fetch("/api/purchases?limit=10", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        // Récupère les achats du dernier numéro de facture
+        const all: Purchase[] = data.purchases ?? [];
+        if (all.length === 0) return;
+        const lastInvoice = all[0].invoiceNumber;
+        setPurchases(all.filter((p) => p.invoiceNumber === lastInvoice));
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const invoiceNumber = purchases[0]?.invoiceNumber ?? "—";
+  const total = purchases.reduce((sum, p) => sum + Number(p.amount), 0);
+
   return (
     <div className="relative min-h-screen bg-gradient-premium">
       <Navbar />
@@ -36,7 +61,7 @@ export default function CheckoutConfirmationPage() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <div className="text-sm text-slate-400">Commande</div>
-                <div className="font-bold text-lg font-mono">{orderNumber}</div>
+                <div className="font-bold text-lg font-mono">{invoiceNumber}</div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-slate-400">Total payé</div>
@@ -45,44 +70,53 @@ export default function CheckoutConfirmationPage() {
             </div>
 
             <div className="border-t border-white/10 pt-6 space-y-4">
-              {purchases.map((item) => (
-                <div key={item.id} className="flex items-center gap-4 glass rounded-2xl p-4">
-                  <div className="w-14 h-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-brand-purple/20 to-brand-pink/20 flex items-center justify-center">
-                    <Music className="w-6 h-6 text-white/30" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold truncate">{item.beat.title}</div>
-                    <div className="text-sm text-slate-400">Prod. by {item.beat.seller.sellerProfile?.artistName || "Inconnu"} — Licence {item?.licenseType || null || "Basic"}</div>
-                   
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button className="glass rounded-xl px-4 py-2 text-sm font-semibold hover:bg-brand-gold/20 hover:text-brand-gold flex items-center gap-2">
-                      <Download className="w-4 h-4" />
-                      Télécharger
-                    </button>
-                  </div>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-brand-gold" />
                 </div>
-              ))}
+              ) : purchases.length === 0 ? (
+                <p className="text-slate-400 text-center py-4">Aucun achat trouvé.</p>
+              ) : (
+                purchases.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4 glass rounded-2xl p-4">
+                    <div className="w-14 h-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-brand-purple/20 to-brand-pink/20 flex items-center justify-center">
+                      <Music className="w-6 h-6 text-white/30" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold truncate">{item.beat.title}</div>
+                      <div className="text-sm text-slate-400">
+                        Prod. by {item.beat.seller.sellerProfile?.artistName || "Inconnu"} — Licence {item.license.type}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link href="/account/downloads" className="glass rounded-xl px-4 py-2 text-sm font-semibold hover:bg-brand-gold/20 hover:text-brand-gold flex items-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Télécharger
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           {/* Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <button className="glass rounded-2xl p-6 hover:scale-105 flex flex-col items-center gap-3 group">
+            <Link href="/account/downloads" className="glass rounded-2xl p-6 hover:scale-105 flex flex-col items-center gap-3 group">
               <Download className="w-8 h-8 text-brand-gold group-hover:scale-110" />
               <span className="font-bold">Tout télécharger</span>
               <span className="text-xs text-slate-400">Fichiers + Licences</span>
-            </button>
-            <button className="glass rounded-2xl p-6 hover:scale-105 flex flex-col items-center gap-3 group">
-              <FileText className="w-8 h-8 text-brand-gold group-hover:scale-110" />
+            </Link>
+            <div className="glass rounded-2xl p-6 flex flex-col items-center gap-3">
+              <FileText className="w-8 h-8 text-brand-gold" />
               <span className="font-bold">Facture PDF</span>
-              <span className="text-xs text-slate-400">{orderNumber}</span>
-            </button>
-            <button className="glass rounded-2xl p-6 hover:scale-105 flex flex-col items-center gap-3 group">
-              <Mail className="w-8 h-8 text-brand-gold group-hover:scale-110" />
+              <span className="text-xs text-slate-400">{invoiceNumber}</span>
+            </div>
+            <div className="glass rounded-2xl p-6 flex flex-col items-center gap-3">
+              <Mail className="w-8 h-8 text-brand-gold" />
               <span className="font-bold">Email envoyé</span>
               <span className="text-xs text-slate-400">Vérifiez votre boîte</span>
-            </button>
+            </div>
           </div>
 
           {/* Info Notice */}

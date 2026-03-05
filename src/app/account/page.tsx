@@ -10,7 +10,7 @@ interface Purchase {
   id: string;
   beat: {
     title: string;
-    genre: string;
+    genre: string[];
     seller: {
       username: string;
       displayName?: string;
@@ -18,6 +18,7 @@ interface Purchase {
   };
   license: {
     name: string;
+    type: string;
   };
   amount: number;
   createdAt: string;
@@ -37,7 +38,7 @@ interface Favorite {
 }
 
 export default function AccountPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [stats, setStats] = useState({
@@ -75,8 +76,8 @@ export default function AccountPage() {
         setPurchases(purchasesData.purchases || []);
         setStats(prev => ({
           ...prev,
-          totalPurchases: purchasesData.total || 0,
-          totalDownloads: purchasesData.total || 0,
+          totalPurchases: purchasesData.pagination?.total || 0,
+          totalDownloads: purchasesData.pagination?.total || 0,
           totalSpent: purchasesData.purchases?.reduce((sum: number, p: Purchase) => sum + Number(p.amount), 0) || 0,
         }));
       }
@@ -85,7 +86,7 @@ export default function AccountPage() {
         setFavorites(favoritesData.favorites || []);
         setStats(prev => ({
           ...prev,
-          totalFavorites: favoritesData.total || 0,
+          totalFavorites: favoritesData.pagination?.total || 0,
         }));
       }
     } catch (error) {
@@ -199,21 +200,21 @@ export default function AccountPage() {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm">{purchase.beat.title}</h4>
                         <p className="text-xs text-slate-400">
-                          {purchase.beat.seller?.displayName || purchase.beat.seller?.username} · {purchase.beat.genre}
+                          {purchase.beat.seller?.displayName || purchase.beat.seller?.username} · {Array.isArray(purchase.beat.genre) ? purchase.beat.genre[0] : purchase.beat.genre}
                         </p>
                       </div>
                       <div className="hidden md:block text-right">
                         <div className="text-xs font-bold px-2 py-0.5 rounded-full inline-block bg-brand-gold/20 text-brand-gold">
-                          {purchase.license.name}
+                          {purchase.license.type.charAt(0) + purchase.license.type.slice(1).toLowerCase()}
                         </div>
                         <div className="text-xs text-slate-400 mt-1 flex items-center gap-1 justify-end">
                           <Clock className="w-3 h-3" /> {new Date(purchase.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </div>
                       </div>
                       <div className="text-brand-gold font-bold text-sm">{Number(purchase.amount).toFixed(2)}€</div>
-                      <button className="btn-primary px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1">
+                      <a href={`/api/purchases/${purchase.id}/download?token=${token}`} className="btn-primary px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1">
                         <Download className="w-4 h-4" />
-                      </button>
+                      </a>
                     </div>
                   ))
                 )}
@@ -274,7 +275,7 @@ export default function AccountPage() {
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm truncate">{fav.beat.title}</div>
                           <div className="text-xs text-slate-400">
-                            {fav.beat.seller.displayName || fav.beat.seller.username} · {fav.beat.bpm} BPM
+                            {fav.beat.seller.displayName || fav.beat.seller.username}{fav.beat.bpm ? ` · ${fav.beat.bpm} BPM` : ""}
                           </div>
                         </div>
                         <Star className="w-4 h-4 text-brand-gold flex-shrink-0" />

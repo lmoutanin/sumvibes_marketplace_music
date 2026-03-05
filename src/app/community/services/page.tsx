@@ -274,9 +274,7 @@ function ServiceCard({ service, featured }: { service: any; featured?: boolean }
               <MessageSquare className="w-4 h-4" />
             </Link>
           )}
-          <Link href={`/community/services/${service.id}`} className="w-10 h-10 rounded-xl btn-primary flex items-center justify-center transition-all shadow-md group-hover:shadow-[0_4px_15px_rgba(254,204,51,0.4)]">
-            <ArrowRight className="w-5 h-5 text-black" />
-          </Link>
+           
         </div>
       </div>
     </div>

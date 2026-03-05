@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
+import fs from "fs";
+import path from "path";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = req.headers.get("authorization")?.split(" ")[1];
+    // Accept token from Authorization header OR ?token= query param (for <a> links)
+    const token =
+      req.headers.get("authorization")?.split(" ")[1] ??
+      req.nextUrl.searchParams.get("token") ??
+      undefined;
+
     if (!token) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
@@ -19,7 +26,6 @@ export async function GET(
 
     const { id } = await params;
 
-    // Vérifier que l'achat appartient à l'utilisateur
     const purchase = await prisma.purchase.findUnique({
       where: { id },
       include: {
@@ -28,15 +34,10 @@ export async function GET(
             id: true,
             title: true,
             mainFileUrl: true,
-            previewUrl: true,
           },
         },
         license: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-          },
+          select: { type: true },
         },
       },
     });
@@ -50,27 +51,50 @@ export async function GET(
     }
 
     if (purchase.paymentStatus !== "COMPLETED") {
-      return NextResponse.json(
-        { error: "Le paiement n'est pas complété" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Paiement non complété" }, { status: 400 });
     }
 
-    // Incrémenter le compteur de téléchargements
+    const fileUrl = purchase.beat.mainFileUrl;
+    if (!fileUrl) {
+      return NextResponse.json({ error: "Fichier non disponible" }, { status: 404 });
+    }
+
+    // Incrémenter le compteur
     await prisma.purchase.update({
       where: { id },
       data: { downloadCount: { increment: 1 } },
     });
 
-    // TODO: Générer une URL signée temporaire pour S3
-    // Pour l'instant, retourner l'URL directe
-    return NextResponse.json({
-      downloadUrl: purchase.beat.mainFileUrl,
-      format: purchase.license.type,
-      expiresIn: 3600, // 1 heure
+    // URL externe → redirection directe
+    if (fileUrl.startsWith("http")) {
+      return NextResponse.redirect(fileUrl);
+    }
+
+    // Fichier local stocké dans /public
+    const filePath = path.join(process.cwd(), "public", fileUrl);
+
+    if (!fs.existsSync(filePath)) {
+      return NextResponse.json({ error: "Fichier introuvable sur le serveur" }, { status: 404 });
+    }
+
+    const fileBuffer = fs.readFileSync(filePath);
+    const ext = path.extname(fileUrl).toLowerCase();
+    const contentType =
+      ext === ".mp3" ? "audio/mpeg" :
+      ext === ".wav" ? "audio/wav" :
+      "application/octet-stream";
+    const safeName = `${purchase.beat.title.replace(/[^a-zA-Z0-9._-]/g, "_")}_${purchase.license?.type ?? "LICENSE"}${ext}`;
+
+    return new NextResponse(fileBuffer, {
+      headers: {
+        "Content-Type": contentType,
+        "Content-Disposition": `attachment; filename="${safeName}"`,
+        "Content-Length": fileBuffer.length.toString(),
+      },
     });
   } catch (error) {
     console.error("Error in GET /api/purchases/[id]/download:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
