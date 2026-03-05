@@ -117,7 +117,7 @@ export default function ProducersPage() {
                 {producers.map((producer) => (
                   <Link
                     key={producer.id}
-                    href={`/producers/${producer.id}`}
+                    href={`/producers/${producer.user?.id || producer.id}`}
                     className="glass rounded-3xl p-8 hover:-translate-y-3 hover:shadow-2xl hover:shadow-brand-purple/30 group flex flex-col h-full"
                   >
                     {/* Header */}

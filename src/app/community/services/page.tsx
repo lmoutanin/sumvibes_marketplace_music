@@ -237,7 +237,7 @@ function ServiceCard({ service, featured }: { service: any; featured?: boolean }
               {catParam?.label || service.category}
             </div>
             <p className="text-sm font-medium text-slate-300">
-              Par <span className="text-white hover:text-brand-gold transition-colors cursor-pointer">{authorName}</span>
+              Par <Link href={`/producers/${service.seller?.id || service.sellerId}`} onClick={(e) => e.stopPropagation()} className="text-white hover:text-brand-gold transition-colors font-semibold">{authorName}</Link>
             </p>
           </div>
         </div>

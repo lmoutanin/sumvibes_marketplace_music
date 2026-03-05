@@ -121,7 +121,7 @@ export default function StylePage() {
                       </Link>
                       <div className="flex-1 min-w-0">
                         <Link href={`/product/${beat.slug}`} className="font-bold text-sm hover:text-brand-gold">{beat.title}</Link>
-                        <p className="text-xs text-slate-400">{beat.seller?.sellerProfile?.artistName || beat.seller?.displayName || beat.seller?.username || "—"}</p>
+                        <Link href={`/producers/${beat.seller?.id}`} className="text-xs text-slate-400 hover:text-brand-gold transition-colors block">{beat.seller?.sellerProfile?.artistName || beat.seller?.displayName || beat.seller?.username || "—"}</Link>
                       </div>
                       <div className="hidden md:flex items-center gap-6 text-xs text-slate-400">
                         <span className="text-brand-gold font-bold">{beat.bpm} BPM</span>

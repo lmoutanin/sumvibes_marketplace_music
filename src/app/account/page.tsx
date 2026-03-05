@@ -12,6 +12,7 @@ interface Purchase {
     title: string;
     genre: string[];
     seller: {
+      id: string;
       username: string;
       displayName?: string;
     };
@@ -30,8 +31,7 @@ interface Favorite {
     title: string;
     bpm: number;
     genre: string;
-    seller: {
-      username: string;
+    seller: {      id: string;      username: string;
       displayName?: string;
     };
   };
@@ -200,7 +200,7 @@ export default function AccountPage() {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm">{purchase.beat.title}</h4>
                         <p className="text-xs text-slate-400">
-                          {purchase.beat.seller?.displayName || purchase.beat.seller?.username} · {Array.isArray(purchase.beat.genre) ? purchase.beat.genre[0] : purchase.beat.genre}
+                          <Link href={`/producers/${purchase.beat.seller?.id}`} className="hover:text-brand-gold transition-colors">{purchase.beat.seller?.displayName || purchase.beat.seller?.username}</Link> · {Array.isArray(purchase.beat.genre) ? purchase.beat.genre[0] : purchase.beat.genre}
                         </p>
                       </div>
                       <div className="hidden md:block text-right">
@@ -275,7 +275,7 @@ export default function AccountPage() {
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm truncate">{fav.beat.title}</div>
                           <div className="text-xs text-slate-400">
-                            {fav.beat.seller.displayName || fav.beat.seller.username}{fav.beat.bpm ? ` · ${fav.beat.bpm} BPM` : ""}
+                            <Link href={`/producers/${fav.beat.seller.id}`} className="hover:text-brand-gold transition-colors">{fav.beat.seller.displayName || fav.beat.seller.username}</Link>{fav.beat.bpm ? ` · ${fav.beat.bpm} BPM` : ""}
                           </div>
                         </div>
                         <Star className="w-4 h-4 text-brand-gold flex-shrink-0" />

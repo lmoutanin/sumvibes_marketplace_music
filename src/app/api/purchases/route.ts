@@ -210,6 +210,7 @@ export async function GET(req: NextRequest) {
               genre: true,
               seller: {
                 select: {
+                  id: true,
                   username: true,
                   displayName: true,
                   sellerProfile: {

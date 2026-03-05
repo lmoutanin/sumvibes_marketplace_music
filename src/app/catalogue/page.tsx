@@ -473,7 +473,7 @@ export default function CataloguePage() {
                         )}
                       </div>
                       <h3 className={`font-bold text-lg leading-tight mb-0.5 line-clamp-1 transition-colors ${isPlaying ? "text-brand-gold" : "group-hover:text-brand-gold"}`}>{beat.title}</h3>
-                      <p className="text-sm text-slate-400 mb-3 line-clamp-1">{beat.seller?.displayName || beat.seller?.username}</p>
+                      <Link href={`/producers/${beat.seller?.id}`} onClick={(e) => e.stopPropagation()} className="text-sm text-slate-400 mb-3 line-clamp-1 hover:text-brand-gold transition-colors block">{beat.seller?.displayName || beat.seller?.username}</Link>
                       <div className="flex items-center justify-center gap-2 text-xs text-slate-400 mb-4 flex-wrap">
                         {beat.bpm && <span>{beat.bpm} BPM</span>}
                         {beat.key && <><span className="text-slate-700">·</span><span>{beat.key}</span></>}
@@ -522,7 +522,7 @@ export default function CataloguePage() {
                       </button>
                       <div className="flex-1 min-w-0">
                         <Link href={`/product/${beat.slug}`} className={`font-bold text-sm block truncate transition-colors ${isPlaying ? "text-brand-gold" : "hover:text-brand-gold"}`}>{beat.title}</Link>
-                        <p className="text-xs text-slate-400 truncate">{beat.seller?.displayName || beat.seller?.username}</p>
+                        <Link href={`/producers/${beat.seller?.id}`} onClick={(e) => e.stopPropagation()} className="text-xs text-slate-400 truncate hover:text-brand-gold transition-colors block">{beat.seller?.displayName || beat.seller?.username}</Link>
                       </div>
                       <div className="hidden md:flex items-center gap-6 text-xs text-slate-400 flex-shrink-0">
                         {beat.bpm && <span>{beat.bpm} BPM</span>}

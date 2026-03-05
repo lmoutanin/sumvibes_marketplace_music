@@ -118,7 +118,7 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
                                         {authorName.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-lg text-white hover:text-brand-gold transition-colors cursor-pointer">{authorName}</h3>
+                                        <Link href={`/producers/${service.sellerId}`} className="font-bold text-lg text-white hover:text-brand-gold transition-colors">{authorName}</Link>
                                         <div className="flex items-center gap-2 text-xs text-slate-400">
                                             <Star className="w-3.5 h-3.5 text-brand-gold fill-brand-gold" /> {service.rating?.toString() || "0"}
                                         </div>
@@ -129,7 +129,7 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
                                         {service.seller.sellerProfile.description}
                                     </p>
                                 )}
-                                <Link href={`/user/${service.seller?.username || 'profile'}`} className="text-sm text-brand-gold font-semibold hover:underline flex items-center gap-1">
+                                <Link href={`/producers/${service.sellerId}`} className="text-sm text-brand-gold font-semibold hover:underline flex items-center gap-1">
                                     Voir le profil complet
                                 </Link>
                             </div>

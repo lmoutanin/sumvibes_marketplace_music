@@ -13,7 +13,7 @@ interface Purchase {
   beat: {
     id: string; title: string; slug: string;
     genre: string[]; bpm: number; key: string | null; coverImage: string | null;
-    seller: { sellerProfile: { artistName: string } | null; displayName: string | null; username: string };
+    seller: { id: string; sellerProfile: { artistName: string } | null; displayName: string | null; username: string };
   };
   license: { id: string; name: string; type: string };
 }
@@ -115,7 +115,7 @@ export default function DownloadsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold text-lg">{item.beat.title}</h3>
-                          <p className="text-sm text-slate-400">{producerName} · {item.beat.genre[0]} · {item.beat.bpm} BPM{item.beat.key ? ` · ${item.beat.key}` : ""}</p>
+                          <p className="text-sm text-slate-400"><Link href={`/producers/${item.beat.seller?.id}`} className="hover:text-brand-gold transition-colors">{producerName}</Link> · {item.beat.genre[0]} · {item.beat.bpm} BPM{item.beat.key ? ` · ${item.beat.key}` : ""}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 flex-wrap">
