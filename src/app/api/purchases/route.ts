@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
-import { generateInvoiceNumber } from "@/lib/auth";
 import { LicenseType, PaymentMethod } from "@prisma/client";
-import { count } from "console";
-import { base, sub } from "framer-motion/client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,14 +28,33 @@ export async function POST(req: NextRequest) {
     }
 
     // Transaction atomique pour créer licences + achats + stats
-    const sharedInvoiceNumber = generateInvoiceNumber();
     const invoiceItems: any[] = [];
     let invoiceSubtotal = 0;
     let invoiceTax = 0;
     let invoiceUser: any = null;
+    let sharedInvoiceNumber: string = "";
 
     const purchases = await prisma.$transaction(async (tx) => {
       const results = [];
+
+      // Générer UN SEUL numéro de facture pour toute la transaction
+      let lastInvoice: any = await tx.purchase.findFirst({
+        orderBy: { invoiceNumber: "desc" },
+      });
+      
+      if (lastInvoice?.invoiceNumber) {
+        const year = lastInvoice.invoiceNumber.split("-")[1];
+        
+        if (year === String(new Date().getFullYear())) {
+          const lastNumber = lastInvoice.invoiceNumber.split("-")[2]; // "00001"
+          const nextNumber = String(Number(lastNumber) + 1).padStart(5, "0"); // "00002"
+          sharedInvoiceNumber = `FAC-${new Date().getFullYear()}-${nextNumber}`; // "FAC-2026-00002"
+        } else {
+          sharedInvoiceNumber = `FAC-${new Date().getFullYear()}-00001`; // "FAC-2026-00001"
+        }
+      } else {
+        sharedInvoiceNumber = `FAC-${new Date().getFullYear()}-00001`; // "FAC-2026-00001"
+      }
 
       for (const item of cartItems) {
         if (!item.beatId) continue;
@@ -77,7 +93,7 @@ export async function POST(req: NextRequest) {
         const amount = Number((priceHT + taxAmount).toFixed(2));     // Total TTC
         const platformFee = Number((priceHT * 0.15).toFixed(2));     // Commission 15% (sur HT)
         const sellerEarnings = Number((priceHT - platformFee).toFixed(2));
-
+        
         // Créer l'achat
         const purchase = await tx.purchase.create({
           data: {
@@ -121,7 +137,7 @@ export async function POST(req: NextRequest) {
         // Accumuler les données de facture
         invoiceItems.push({
           item: beat.title,
-          description: beat.description || "",
+          description: license.type || "",
           quantity: 1,
           amount: priceHT,
         });
@@ -148,12 +164,28 @@ export async function POST(req: NextRequest) {
         postalCode: invoiceUser.postalCode,
         country: invoiceUser.country,
       };
+
+      const licenseTypes = new Set<string>(
+        cartItems
+          .map((item: any) => String(item?.licenseType || "BASIC").toUpperCase())
+      );
+
+     
+
       const payment = {
         subtotal: Number(invoiceSubtotal.toFixed(2)),
         tax: Number(invoiceTax.toFixed(2)),
         total: Number((invoiceSubtotal + invoiceTax).toFixed(2)),
         invoice_nr: sharedInvoiceNumber,
+        method: data.paymentMethod,
+        
       };
+
+      console.log("Invoice payload check:", {
+        invoice_nr: payment.invoice_nr,
+        method: payment.method,
+        licenseTypes: Array.from(licenseTypes),
+      });
 
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
       await fetch(`${baseUrl}/api/invoice`, {

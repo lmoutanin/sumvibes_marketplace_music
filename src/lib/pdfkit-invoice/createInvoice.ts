@@ -1,7 +1,20 @@
+import { number } from "joi";
 import path from "path";
 import PDFDocumentLib from "pdfkit";
 
 const PDFDocument = (PDFDocumentLib as any).default || PDFDocumentLib;
+
+// ─── INFO VENDEUR ─────────────────────────────────────────────────────────────────
+const SELLER = {
+  name:    "BE GREAT",
+  siret : "93238647700016",
+  tva_number: "FR28932386477",  
+  status:"SAS",
+  address: "37 RUE DE GRIERE 74270 MARLIOZ",
+  city:    "97100 Guadeloupe",
+  country: "France",
+}
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface InvoiceItem {
@@ -16,6 +29,7 @@ export interface InvoicePayment {
   subtotal:   number;
   tax:        number;
   total:      number;
+  method?:    string;
 }
 
 export interface InvoiceShipping {
@@ -64,6 +78,44 @@ const T = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const euro = (n: number): string => Number(n).toFixed(2) + " €";
 
+type LicenseTier = "BASIC" | "PREMIUM" | "EXCLUSIVE";
+
+function toLicenseTier(value: string): LicenseTier | null {
+  const normalized = String(value || "").toUpperCase();
+  if (normalized.includes("EXCLUSIVE")) return "EXCLUSIVE";
+  if (normalized.includes("PREMIUM")) return "PREMIUM";
+  if (normalized.includes("BASIC")) return "BASIC";
+  return null;
+}
+
+function termsForTier(tier: LicenseTier): string {
+  switch (tier) {
+    case "EXCLUSIVE":
+      return "EXCLUSIVE : Usage Commercial | Territoire France | Durée Illimitée";
+    case "PREMIUM":
+      return "PREMIUM : Usage Commercial | Territoire France | Durée 5 ans";
+    case "BASIC":
+    default:
+      return "BASIC : Usage Privé | Territoire France | Durée 1 an";
+  }
+}
+
+function buildRightsAssignment(items: InvoiceItem[]): string {
+  const ordered: LicenseTier[] = ["BASIC", "PREMIUM", "EXCLUSIVE"];
+  const found = new Set<LicenseTier>();
+
+  for (const item of items) {
+    const tier = toLicenseTier(item.description);
+    if (tier) found.add(tier);
+  }
+
+  if (found.size === 0) {
+    return termsForTier("BASIC");
+  }
+
+  return ordered.filter((tier) => found.has(tier)).map(termsForTier).join("  •  ");
+}
+
 function hr(
   doc: PDFKit.PDFDocument,
   y: number,
@@ -92,7 +144,7 @@ export function createInvoiceBuffer(invoice: Invoice): Promise<Buffer> {
     y     = drawBillingSection(doc, invoice, y);
     y     = drawTable(doc, invoice, y);
     y     = drawTotals(doc, invoice, y);
-    drawFooter(doc);
+    drawFooter(doc, invoice);
 
     doc.end();
   });
@@ -100,50 +152,72 @@ export function createInvoiceBuffer(invoice: Invoice): Promise<Buffer> {
 
 // ─── 1. HEADER ────────────────────────────────────────────────────────────────
 function drawHeader(doc: PDFKit.PDFDocument, invoice: Invoice): number {
-  const H = 96;
+  const H = 108;
 
   doc.rect(0, 0, PAGE_W, H).fill(C.headerBg);
 
+  const logoX = ML;
+  const logoY = 18;
+  const companyX = ML + 70;
+  const rightBlockX = 380;
+  const rightBlockW = PAGE_W - MR - rightBlockX;
+  const leftBlockW = rightBlockX - companyX - 16;
+
   // Logo
   try {
-    doc.image(path.join(process.cwd(), "public", "logo.png"), ML, 18, {
+    doc.image(path.join(process.cwd(), "public", "logo.png"), logoX, logoY, {
       height: 58, fit: [58, 58],
     });
   } catch (_) {
-    doc.save().circle(ML + 29, 47, 26).fill("#2A2A2A").restore();
+    doc.save().circle(logoX + 29, logoY + 29, 26).fill("#2A2A2A").restore();
   }
 
-  // Nom société
+  // Colonne gauche (société) — avec largeur max pour éviter de croiser la colonne droite
   doc
     .fillColor(C.white)
     .font("Helvetica-Bold")
     .fontSize(21)
-    .text("SUMVIBES", ML + 70, 24, { lineBreak: false });
+    .text(SELLER.name, companyX, 22, { width: leftBlockW, lineBreak: false, ellipsis: true });
 
-  // Adresse
+  doc
+    .fillColor(C.cloud)
+    .font("Helvetica")
+    .fontSize(9)
+    .text("Forme juridique : " + SELLER.status, companyX, 47, { width: leftBlockW, lineBreak: false, ellipsis: true });
+
   doc
     .fillColor(C.cloud)
     .font("Helvetica")
     .fontSize(8)
-    .text("431 RUE DE L'INDUSTRIE PROLONGÉE  •  GUADELOUPE", ML + 70, 52, { lineBreak: false });
+    .text("Adresse : " + SELLER.address, companyX, 59, { width: leftBlockW, lineBreak: false, ellipsis: true });
 
-  // Label FACTURE
+  doc
+    .fillColor(C.cloud)
+    .font("Helvetica")
+    .fontSize(8)
+    .text("SIRET : " + SELLER.siret, companyX, 70, { width: leftBlockW, lineBreak: false, ellipsis: true });
+
+  doc
+    .fillColor(C.cloud)
+    .font("Helvetica")
+    .fontSize(8)
+    .text("N° de TVA : " + SELLER.tva_number, companyX, 81, { width: leftBlockW, lineBreak: false, ellipsis: true });
+
+  // Colonne droite (facture)
   doc
     .fillColor(C.mist)
     .font("Helvetica")
     .fontSize(7.5)
-    .text("FACTURE", 0, 22, { width: PAGE_W - MR, align: "right", lineBreak: false });
+    .text("FACTURE", rightBlockX, 24, { width: rightBlockW, align: "right", lineBreak: false });
 
-  // Numéro
   doc
     .fillColor(C.white)
     .font("Helvetica-Bold")
     .fontSize(11.5)
-    .text(String(invoice.payment.invoice_nr), 0, 37, {
-      width: PAGE_W - MR, align: "right", lineBreak: false,
+    .text(String(invoice.payment.invoice_nr), rightBlockX, 39, {
+      width: rightBlockW, align: "right", lineBreak: false,
     });
 
-  // Date
   const dateStr = new Date().toLocaleDateString("fr-FR", {
     day: "2-digit", month: "long", year: "numeric",
   });
@@ -151,7 +225,7 @@ function drawHeader(doc: PDFKit.PDFDocument, invoice: Invoice): number {
     .fillColor(C.cloud)
     .font("Helvetica")
     .fontSize(8)
-    .text(dateStr, 0, 56, { width: PAGE_W - MR, align: "right", lineBreak: false });
+    .text(dateStr, rightBlockX, 55, { width: rightBlockW, align: "right", lineBreak: false });
 
   // Liseré bas du header
   doc.rect(0, H, PAGE_W, 2).fill("#1C1C1C");
@@ -172,10 +246,10 @@ function drawBillingSection(doc: PDFKit.PDFDocument, invoice: Invoice, startY: n
 
   // Vendeur
   doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(10.5)
-    .text("SUMVIBES", colLeft, TOP + 13, { lineBreak: false });
+    .text(SELLER.name, colLeft, TOP + 13, { lineBreak: false });
   doc.fillColor(C.smoke).font("Helvetica").fontSize(8.5)
-    .text("431 rue de l'industrie prolongée", colLeft, TOP + 27, { lineBreak: false })
-    .text("97100 Guadeloupe, France",         colLeft, TOP + 39, { lineBreak: false });
+    .text(SELLER.address, colLeft, TOP + 27, { lineBreak: false })
+    .text(SELLER.city, colLeft, TOP + 39, { lineBreak: false });
 
   // Client
   doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(10.5)
@@ -193,8 +267,8 @@ function drawBillingSection(doc: PDFKit.PDFDocument, invoice: Invoice, startY: n
   const metaW = CONTENT / 3;
   const metas = [
     { label: "DATE D'EMISSION", value: new Date().toLocaleDateString("fr-FR") },
-    { label: "STATUT",          value: "Paye"             },
-    { label: "METHODE",         value: "Carte / En ligne" },
+    { label: "STATUT",          value: "Paiement immédiat" },
+    { label: "METHODE",         value: invoice.payment.method || "Non spécifiée" },
   ];
 
   metas.forEach((m, i) => {
@@ -317,7 +391,7 @@ function drawTotals(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): 
   doc.rect(rectX, totalY, rectW, totalH).fill(C.totalBg);
 
   doc.fillColor(C.white).font("Helvetica-Bold").fontSize(10.5)
-    .text("TOTAL DU", LX, totalY + 10, { lineBreak: false });
+    .text("TOTAL TTC", LX, totalY + 10, { lineBreak: false });
 
   doc.fillColor(C.white).font("Helvetica-Bold").fontSize(12)
     .text(euro(invoice.payment.total), VX, totalY + 9, {
@@ -328,25 +402,38 @@ function drawTotals(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): 
 }
 
 // ─── 5. FOOTER ────────────────────────────────────────────────────────────────
-function drawFooter(doc: PDFKit.PDFDocument): void {
-  const FOOTER_H = 48;
+function drawFooter(doc: PDFKit.PDFDocument, invoice: Invoice): void {
+  const FOOTER_H = 72;
   const footerY  = PAGE_H - FOOTER_H;
+  const rightsText = buildRightsAssignment(invoice.items);
 
   doc.rect(0, footerY, PAGE_W, FOOTER_H).fill(C.footerBg);
   hr(doc, footerY, C.cloud, 0.8, 0, PAGE_W);
 
+  doc.fillColor(C.smoke).font("Helvetica-Bold").fontSize(7.5)
+    .text(
+      "CESSION DE DROITS",
+      ML, footerY + 7, { width: CONTENT, align: "center", lineBreak: false }
+    );
+
+  doc.fillColor(C.mist).font("Helvetica").fontSize(7)
+    .text(
+      rightsText,
+      ML, footerY + 18, { width: CONTENT, align: "center", lineBreak: false, ellipsis: true }
+    );
+
   doc.fillColor(C.smoke).font("Helvetica").fontSize(8)
     .text(
       "Merci pour votre achat chez SUMVIBES — nous esperons que vous apprecierez votre musique !",
-      ML, footerY + 11, { width: CONTENT, align: "center", lineBreak: false }
+      ML, footerY + 35, { width: CONTENT, align: "center", lineBreak: false }
     );
 
   doc.fillColor(C.mist).font("Helvetica").fontSize(7.5)
     .text(
       "www.sumvibes.com  •  contact@sumvibes.com",
-      ML, footerY + 25, { width: CONTENT, align: "center", lineBreak: false }
+      ML, footerY + 49, { width: CONTENT, align: "center", lineBreak: false }
     );
 
   doc.fillColor(C.cloud).font("Helvetica").fontSize(7)
-    .text("Page 1 / 1", ML, footerY + 36, { width: CONTENT, align: "right", lineBreak: false });
+    .text("Page 1 / 1", ML, footerY + 60, { width: CONTENT, align: "right", lineBreak: false });
 }

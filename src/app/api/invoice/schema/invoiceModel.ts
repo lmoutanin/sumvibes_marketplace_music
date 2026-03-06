@@ -20,5 +20,6 @@ export const invoiceSchema = Joi.object({
     subtotal: Joi.number().required(),
     tax: Joi.number().required(),
     total: Joi.number().required(),
-    invoice_nr: Joi.string().required()
+    invoice_nr: Joi.string().required(),
+    method: Joi.string().required()
 });
