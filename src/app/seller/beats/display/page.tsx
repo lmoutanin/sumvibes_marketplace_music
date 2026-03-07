@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Music,
   Zap,
@@ -39,6 +40,9 @@ type Beat = {
   mood: string[];
   instruments: string[];
   tags: string[];
+  mp3FileUrl: string | null;
+  wavFileUrl: string | null;
+  trackoutFileUrl: string | null;
   basicPrice: string | null;
   premiumPrice: string | null;
   exclusivePrice: string | null;
@@ -53,7 +57,6 @@ type Beat = {
 type EditState = {
   title: string;
   description: string;
-  slug: string;
   bpm: string;
   key: string;
   duration: string;
@@ -61,12 +64,16 @@ type EditState = {
   mood: string[];
   instruments: string[];
   tags: string;
+  mp3File: File | null;
+  wavFile: File | null;
+  trackoutFile: File | null;
+  mp3FileUrl: string | null;
+  wavFileUrl: string | null;
+  trackoutFileUrl: string | null;
   basicPrice: string;
   premiumPrice: string;
   exclusivePrice: string;
   status: string;
-  seoTitle: string;
-  seoDescription: string;
 };
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -143,6 +150,11 @@ const INSTRUMENTS = [
   "Flute",
 ];
 
+const KEYS = [
+  "C", "D", "E", "F", "G", "A", "B",
+  "Cm", "Dm", "Em", "Fm", "Gm", "Am"
+];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (s: number) =>
@@ -158,7 +170,6 @@ function beatToEdit(b: Beat): EditState {
   return {
     title: b.title,
     description: b.description ?? "",
-    slug: b.slug,
     bpm: b.bpm?.toString() ?? "",
     key: b.key ?? "",
     duration: b.duration?.toString() ?? "",
@@ -166,12 +177,16 @@ function beatToEdit(b: Beat): EditState {
     mood: b.mood,
     instruments: b.instruments,
     tags: b.tags.join(", "),
+    mp3File: null,
+    wavFile: null,
+    trackoutFile: null,
+    mp3FileUrl: b.mp3FileUrl ?? null,
+    wavFileUrl: b.wavFileUrl ?? null,
+    trackoutFileUrl: b.trackoutFileUrl ?? null,
     basicPrice: b.basicPrice ?? "",
     premiumPrice: b.premiumPrice ?? "",
     exclusivePrice: b.exclusivePrice ?? "",
     status: b.status,
-    seoTitle: b.seoTitle ?? "",
-    seoDescription: b.seoDescription ?? "",
   };
 }
 
@@ -192,19 +207,19 @@ function SInput({
   return (
     <input
       {...props}
-      className={`w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-white text-sm placeholder-slate-600
-        focus:outline-none focus:border-brand-gold/50 focus:bg-white/[0.06] focus:ring-1 focus:ring-brand-gold/20 transition-all
-        [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${className}`}
+      className={`w-full px-4 py-3 bg-white/[0.07] border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold focus:bg-white/10 focus:ring-2 focus:ring-brand-gold/20 transition-all duration-200 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${className}`}
     />
   );
 }
 
-function STextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+function STextarea({
+  className = "",
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-white text-sm placeholder-slate-600
-        focus:outline-none focus:border-brand-gold/50 focus:bg-white/[0.06] focus:ring-1 focus:ring-brand-gold/20 transition-all resize-none"
+      className={`w-full px-4 py-3 bg-white/[0.07] border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold focus:bg-white/10 focus:ring-2 focus:ring-brand-gold/20 transition-all duration-200 text-sm resize-none ${className}`}
     />
   );
 }
@@ -223,11 +238,10 @@ function SSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none px-3.5 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-white text-sm
-          focus:outline-none focus:border-brand-gold/50 transition-all pr-8 cursor-pointer"
+        className="w-full px-4 py-3 bg-white/[0.07] border border-white/20 rounded-xl text-white appearance-none focus:outline-none focus:border-brand-gold focus:bg-white/10 focus:ring-2 focus:ring-brand-gold/20 transition-all duration-200 text-sm outline-none cursor-pointer"
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-[#0d0d12]">
+          <option key={o.value} value={o.value}>
             {o.label}
           </option>
         ))}
@@ -250,11 +264,10 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide border transition-all duration-150 ${
-        active
-          ? "bg-brand-gold border-brand-gold text-slate-900 shadow-[0_2px_10px_rgba(212,175,55,0.4)]"
-          : "bg-white/[0.03] border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300"
-      }`}
+      className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide border transition-all duration-150 ${active
+        ? "bg-brand-gold border-brand-gold text-slate-900 shadow-[0_2px_10px_rgba(212,175,55,0.4)]"
+        : "bg-white/[0.03] border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300"
+        }`}
     >
       {children}
     </button>
@@ -298,6 +311,10 @@ function EditModal({
   onClose: () => void;
   onSaved: (b: Beat) => void;
 }) {
+  const { user } = useAuth();
+  const plan = user?.subscription?.plan;
+  const isFreemium = plan === "FREEMIUM" || !user?.subscription;
+  const isPremium = plan === "PREMIUM_MONTHLY" || plan === "PREMIUM_YEARLY";
   const [edit, setEdit] = useState<EditState>(beatToEdit(beat));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -305,9 +322,7 @@ function EditModal({
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState(beat.coverImage ?? "");
   const [isDragging, setIsDragging] = useState(false);
-  const [activeTab, setActiveTab] = useState<"info" | "tags" | "prix" | "seo">(
-    "info",
-  );
+  const [activeTab, setActiveTab] = useState<"info" | "audio" | "tags" | "prix">("info");
   const coverRef = useRef<HTMLInputElement>(null);
 
   // Fermer sur Escape
@@ -358,62 +373,34 @@ function EditModal({
     setSaving(true);
     setError("");
     try {
-      let body: BodyInit;
-      const headers: Record<string, string> = { Authorization: `JWT ${token}` };
+      const fd = new FormData();
+      fd.append("title", edit.title);
+      fd.append("description", edit.description);
+      fd.append("bpm", edit.bpm);
+      fd.append("key", edit.key);
+      fd.append("duration", edit.duration);
+      fd.append("basicPrice", edit.basicPrice);
+      fd.append("premiumPrice", edit.premiumPrice);
+      fd.append("exclusivePrice", edit.exclusivePrice);
+      fd.append("status", edit.status);
+      edit.genre.forEach((g) => fd.append("genre", g));
+      edit.mood.forEach((m) => fd.append("mood", m));
+      edit.instruments.forEach((i) => fd.append("instruments", i));
 
       if (coverFile) {
-        // ✅ Avec une nouvelle cover : FormData (pas de Content-Type manuel, le browser le set)
-        const fd = new FormData();
-        fd.append("title", edit.title);
-        fd.append("description", edit.description);
-        fd.append("slug", edit.slug);
-        fd.append("bpm", edit.bpm);
-        fd.append("key", edit.key);
-        fd.append("duration", edit.duration);
-        fd.append("basicPrice", edit.basicPrice);
-        fd.append("premiumPrice", edit.premiumPrice);
-        fd.append("exclusivePrice", edit.exclusivePrice);
-        fd.append("status", edit.status);
-        fd.append("seoTitle", edit.seoTitle);
-        fd.append("seoDescription", edit.seoDescription);
-        fd.append("tags", edit.tags);
-        edit.genre.forEach((g) => fd.append("genre", g));
-        edit.mood.forEach((m) => fd.append("mood", m));
-        edit.instruments.forEach((i) => fd.append("instruments", i));
+        if (coverFile.type !== "image/jpeg" && coverFile.type !== "image/png" && coverFile.type !== "image/jpg") {
+          throw new Error("Seuls les formats JPG et PNG sont autorisés pour la cover.");
+        }
         fd.append("cover", coverFile);
-        body = fd;
-      } else {
-        // ✅ Sans cover : JSON simple
-        headers["Content-Type"] = "application/json";
-        body = JSON.stringify({
-          title: edit.title,
-          description: edit.description,
-          slug: edit.slug,
-          bpm: edit.bpm ? Number(edit.bpm) : null,
-          key: edit.key || null,
-          duration: edit.duration ? Number(edit.duration) : null,
-          basicPrice: edit.basicPrice ? Number(edit.basicPrice) : null,
-          premiumPrice: edit.premiumPrice ? Number(edit.premiumPrice) : null,
-          exclusivePrice: edit.exclusivePrice
-            ? Number(edit.exclusivePrice)
-            : null,
-          status: edit.status,
-          seoTitle: edit.seoTitle,
-          seoDescription: edit.seoDescription,
-          tags: edit.tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean),
-          genre: edit.genre,
-          mood: edit.mood,
-          instruments: edit.instruments,
-        });
       }
+      if (edit.mp3File) fd.append("mp3File", edit.mp3File);
+      if (edit.wavFile) fd.append("wavFile", edit.wavFile);
+      if (edit.trackoutFile) fd.append("trackoutFile", edit.trackoutFile);
 
       const res = await fetch(`/api/beats/${beat.id}`, {
         method: "PATCH",
-        headers,
-        body,
+        headers: { Authorization: `JWT ${token}` },
+        body: fd,
       });
 
       if (!res.ok) {
@@ -436,9 +423,9 @@ function EditModal({
 
   const TABS = [
     { key: "info" as const, label: "Infos" },
+    { key: "audio" as const, label: "Fichiers" },
     { key: "tags" as const, label: "Tags" },
     { key: "prix" as const, label: "Prix" },
-    { key: "seo" as const, label: "SEO" },
   ];
 
   return (
@@ -450,7 +437,7 @@ function EditModal({
       />
 
       {/* Drawer */}
-      <div className="relative ml-auto w-full max-w-2xl h-full bg-[#0a0a0f] border-l border-white/10 flex flex-col shadow-[−20px_0_60px_rgba(0,0,0,0.8)]">
+      <div className="relative ml-auto w-full max-w-2xl h-full bg-[#0e0048] border-l border-white/10 flex flex-col shadow-[−20px_0_60px_rgba(0,0,0,0.8)]">
         {/* Header */}
         <div className="flex items-center gap-4 px-6 py-4 border-b border-white/[0.07] shrink-0">
           <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-white/[0.05] border border-white/10">
@@ -458,9 +445,11 @@ function EditModal({
               <Image
                 src={
                   coverPreview.startsWith("blob:") ||
-                  coverPreview.startsWith("http")
+                    coverPreview.startsWith("http")
                     ? coverPreview
-                    : `/uploads/covers/${coverPreview}`
+                    : coverPreview.startsWith("/uploads")
+                      ? coverPreview
+                      : `/uploads/covers/${coverPreview.split("/").pop()}` // Protection contre les doubles slashes
                 }
                 alt={edit.title}
                 fill
@@ -487,17 +476,16 @@ function EditModal({
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-6 pt-4 pb-0 shrink-0">
+        <div className="flex gap-2 px-6 pt-4 pb-4 shrink-0 overflow-x-auto border-b border-white/[0.07] hide-scrollbar">
           {TABS.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                activeTab === t.key
-                  ? "bg-brand-gold/15 text-brand-gold border border-brand-gold/30"
-                  : "text-slate-500 hover:text-slate-300 border border-transparent"
-              }`}
+              className={`flex items-center px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === t.key
+                ? "bg-brand-gold text-slate-900 shadow-md"
+                : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-transparent"
+                }`}
             >
               {t.label}
             </button>
@@ -526,15 +514,6 @@ function EditModal({
                   placeholder="Ambiance, histoire du beat..."
                 />
               </div>
-              <div>
-                <SLabel>Slug</SLabel>
-                <SInput
-                  value={edit.slug}
-                  onChange={(e) => set("slug", e.target.value)}
-                  placeholder="midnight-vibes"
-                  className="font-mono text-xs"
-                />
-              </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <SLabel>BPM</SLabel>
@@ -547,10 +526,13 @@ function EditModal({
                 </div>
                 <div>
                   <SLabel>Tonalité</SLabel>
-                  <SInput
+                  <SSelect
                     value={edit.key}
-                    onChange={(e) => set("key", e.target.value)}
-                    placeholder="Am"
+                    onChange={(v) => set("key", v)}
+                    options={[
+                      { value: "", label: "Non défini" },
+                      ...KEYS.map((k) => ({ value: k, label: k })),
+                    ]}
                   />
                 </div>
                 <div>
@@ -591,20 +573,21 @@ function EditModal({
                     const f = e.dataTransfer.files?.[0];
                     if (f) applyFile(f);
                   }}
-                  className={`relative h-36 rounded-2xl border-2 border-dashed cursor-pointer overflow-hidden transition-all group ${
-                    isDragging
-                      ? "border-brand-gold bg-brand-gold/10"
-                      : "border-white/10 hover:border-white/25 bg-white/[0.02]"
-                  }`}
+                  className={`relative h-36 rounded-2xl border-2 border-dashed cursor-pointer overflow-hidden transition-all group ${isDragging
+                    ? "border-brand-gold bg-brand-gold/10"
+                    : "border-white/10 hover:border-white/25 bg-white/[0.02]"
+                    }`}
                 >
                   {coverPreview ? (
                     <>
                       <Image
                         src={
                           coverPreview.startsWith("blob:") ||
-                          coverPreview.startsWith("http")
+                            coverPreview.startsWith("http")
                             ? coverPreview
-                            : `/uploads/covers/${coverPreview}`
+                            : coverPreview.startsWith("/uploads")
+                              ? coverPreview
+                              : `/uploads/covers/${coverPreview.split("/").pop()}`
                         }
                         alt="cover"
                         fill
@@ -667,13 +650,66 @@ function EditModal({
                   </div>
                 </div>
               ))}
-              <div>
-                <SLabel>Tags libres (séparés par virgules)</SLabel>
-                <SInput
-                  value={edit.tags}
-                  onChange={(e) => set("tags", e.target.value)}
-                  placeholder="trap, nuit, mélancolique..."
+            </div>
+          )}
+
+          {/* ── TAB AUDIO ── */}
+          {activeTab === "audio" && (
+            <div className="space-y-6">
+              <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <p className="text-xs text-blue-300 font-semibold mb-3">Fichier MP3 (Obligatoire)</p>
+                <input
+                  type="file"
+                  accept="audio/mp3,audio/mpeg"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) set("mp3File", f);
+                  }}
+                  className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-500/20 file:text-blue-300 hover:file:bg-blue-500/30 transition-all"
                 />
+                {(edit.mp3File || edit.mp3FileUrl) && (
+                  <p className="text-[11px] text-slate-500 mt-2 truncate">Actuel: {edit.mp3File ? edit.mp3File.name : edit.mp3FileUrl?.split("/").pop()}</p>
+                )}
+              </div>
+
+              <div className={`p-4 rounded-xl border ${isFreemium ? 'bg-slate-800/50 border-white/5 opacity-50' : 'bg-brand-gold/10 border-brand-gold/20'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <p className={`text-xs font-semibold ${isFreemium ? 'text-slate-500' : 'text-brand-gold'}`}>Fichier WAV (Haute Qualité)</p>
+                  {isFreemium && <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-slate-400 font-bold">Standard min.</span>}
+                </div>
+                <input
+                  type="file"
+                  accept="audio/wav,audio/x-wav"
+                  disabled={isFreemium}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) set("wavFile", f);
+                  }}
+                  className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-brand-gold/20 file:text-brand-gold hover:file:bg-brand-gold/30 disabled:opacity-50 transition-all cursor-pointer"
+                />
+                {(edit.wavFile || edit.wavFileUrl) && (
+                  <p className="text-[11px] text-slate-500 mt-2 truncate">Actuel: {edit.wavFile ? edit.wavFile.name : edit.wavFileUrl?.split("/").pop()}</p>
+                )}
+              </div>
+
+              <div className={`p-4 rounded-xl border ${!isPremium ? 'bg-slate-800/50 border-white/5 opacity-50' : 'bg-purple-500/10 border-purple-500/20'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <p className={`text-xs font-semibold ${!isPremium ? 'text-slate-500' : 'text-purple-400'}`}>Fichier Trackout (ZIP/RAR)</p>
+                  {!isPremium && <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-slate-400 font-bold">Premium requis</span>}
+                </div>
+                <input
+                  type="file"
+                  accept=".zip,.rar,application/zip,application/x-rar-compressed"
+                  disabled={!isPremium}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) set("trackoutFile", f);
+                  }}
+                  className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-purple-500/20 file:text-purple-400 hover:file:bg-purple-500/30 disabled:opacity-50 transition-all cursor-pointer"
+                />
+                {(edit.trackoutFile || edit.trackoutFileUrl) && (
+                  <p className="text-[11px] text-slate-500 mt-2 truncate">Actuel: {edit.trackoutFile ? edit.trackoutFile.name : edit.trackoutFileUrl?.split("/").pop()}</p>
+                )}
               </div>
             </div>
           )}
@@ -689,13 +725,17 @@ function EditModal({
                     sub: "MP3 · Non-commercial",
                     icon: "🎧",
                     color: "border-white/10",
+                    disabled: false,
+                    lockMsg: null,
                   },
                   {
                     name: "premiumPrice",
-                    label: "Premium",
+                    label: "Non-Exclusif",
                     sub: "WAV + MP3 · Commercial",
                     icon: "⭐",
                     color: "border-brand-gold/25",
+                    disabled: isFreemium || (!edit.wavFile && !edit.wavFileUrl),
+                    lockMsg: isFreemium ? "Abonnement Standard. min." : "Upload WAV requis (Onglet Fichiers)",
                   },
                   {
                     name: "exclusivePrice",
@@ -703,73 +743,40 @@ function EditModal({
                     sub: "Tous formats · Droits exclusifs",
                     icon: "👑",
                     color: "border-purple-400/25",
+                    disabled: !isPremium || (!edit.trackoutFile && !edit.trackoutFileUrl),
+                    lockMsg: !isPremium ? "Abonnement Premium requis" : "Upload ZIP/RAR requis",
                   },
                 ] as const
-              ).map(({ name, label, sub, icon, color }) => (
+              ).map(({ name, label, sub, icon, color, disabled, lockMsg }) => (
                 <div
                   key={name}
-                  className={`p-5 rounded-2xl bg-white/[0.03] border ${color}`}
+                  className={`p-5 rounded-2xl bg-white/[0.03] border transition-all ${disabled ? "opacity-50 grayscale border-slate-700 pointer-events-none" : color}`}
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">{icon}</span>
-                    <div>
-                      <p className="text-white font-bold text-sm">{label}</p>
-                      <p className="text-slate-600 text-[11px]">{sub}</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{icon}</span>
+                      <div>
+                        <p className="text-white font-bold text-sm">{label}</p>
+                        <p className="text-slate-600 text-[11px]">{sub}</p>
+                      </div>
                     </div>
+                    {disabled && <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider bg-black/50 px-2 py-1 rounded border border-white/5">{lockMsg}</span>}
                   </div>
-                  <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5">
+                  <div className={`flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 ${disabled ? 'opacity-40' : ''}`}>
                     <span className="text-slate-400 font-bold text-sm">€</span>
                     <SInput
                       type="number"
+                      disabled={disabled}
                       value={edit[name as keyof EditState] as string}
                       onChange={(e) =>
                         set(name as keyof EditState, e.target.value)
                       }
                       placeholder="0.00"
-                      className="border-none bg-transparent px-0 py-0 text-white text-xl font-black focus:ring-0"
+                      className="border-none bg-transparent px-0 py-0 text-white text-xl font-black focus:ring-0 disabled:text-slate-500"
                     />
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-
-          {/* ── TAB SEO ── */}
-          {activeTab === "seo" && (
-            <div className="space-y-4">
-              <div className="p-3.5 rounded-xl bg-brand-gold/10 border border-brand-gold/20">
-                <p className="text-xs text-slate-400 flex items-center gap-2">
-                  <Tag className="w-3.5 h-3.5 text-brand-gold shrink-0" />
-                  Le SEO améliore ta visibilité sur Google. Ces champs sont{" "}
-                  <span className="text-brand-gold font-semibold">
-                    optionnels
-                  </span>
-                  .
-                </p>
-              </div>
-              <div>
-                <SLabel>Titre SEO</SLabel>
-                <SInput
-                  value={edit.seoTitle}
-                  onChange={(e) => set("seoTitle", e.target.value)}
-                  placeholder="Beat Trap 140 BPM – Mon artiste"
-                />
-                <p className="text-[11px] text-slate-700 mt-1">
-                  {edit.seoTitle.length}/60 caractères
-                </p>
-              </div>
-              <div>
-                <SLabel>Description SEO</SLabel>
-                <STextarea
-                  value={edit.seoDescription}
-                  onChange={(e) => set("seoDescription", e.target.value)}
-                  rows={3}
-                  placeholder="Beat trap sombre avec piano mélancolique..."
-                />
-                <p className="text-[11px] text-slate-700 mt-1">
-                  {edit.seoDescription.length}/160 caractères
-                </p>
-              </div>
             </div>
           )}
 
@@ -814,7 +821,7 @@ function EditModal({
           </button>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 
@@ -988,7 +995,7 @@ export default function SellerBeatsPage() {
         try {
           const p = JSON.parse(atob(t.split(".")[1]));
           sellerId = p.userId;
-        } catch {}
+        } catch { }
         const res = await fetch(`/api/beats?sellerId=${sellerId}`);
         if (!res.ok) throw new Error();
         const data = await res.json();
@@ -1145,11 +1152,10 @@ export default function SellerBeatsPage() {
                   key={s}
                   type="button"
                   onClick={() => setFilter(s)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                    filter === s
-                      ? "bg-brand-gold border-brand-gold text-slate-900"
-                      : "bg-white/[0.03] border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300"
-                  }`}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all ${filter === s
+                    ? "bg-brand-gold border-brand-gold text-slate-900"
+                    : "bg-white/[0.03] border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300"
+                    }`}
                 >
                   {label} <span className="opacity-50 ml-1">({count})</span>
                 </button>

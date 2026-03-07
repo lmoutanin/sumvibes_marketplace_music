@@ -11,6 +11,7 @@ import {
   Search,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Check,
   X,
   ImagePlus,
@@ -51,6 +52,11 @@ const INSTRUMENTS = [
   "Bass",
   "Strings",
   "Brass",
+];
+
+const KEYS = [
+  "C", "D", "E", "F", "G", "A", "B",
+  "Cm", "Dm", "Em", "Fm", "Gm", "Am",
 ];
 
 const STEPS = [
@@ -468,32 +474,23 @@ export default function SellerBeatsPage() {
               {/* Tonalité */}
               <div>
                 <FieldLabel>Tonalité</FieldLabel>
-                <select
-                  name="key"
-                  value={form.key}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/[0.07] border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold focus:bg-white/10 focus:ring-2 focus:ring-brand-gold/20 transition-all duration-200 text-sm appearance-none dark:bg-white/[0.07] dark:text-white dark:border-white/20 dark:focus:bg-white/10"
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.07)",
-                    color: "#fff",
-                  }}
-                  required
-                >
-                  <option value="">Sélectionner</option>
-                  <option value="C">C</option>
-                  <option value="D">D</option>
-                  <option value="E">E</option>
-                  <option value="F">F</option>
-                  <option value="G">G</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="Cm">Cm</option>
-                  <option value="Dm">Dm</option>
-                  <option value="Em">Em</option>
-                  <option value="Fm">Fm</option>
-                  <option value="Gm">Gm</option>
-                  <option value="Am">Am</option>
-                </select>
+                <div className="relative">
+                  <select
+                    name="key"
+                    value={form.key}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white/[0.07] border border-white/20 rounded-xl text-white appearance-none focus:outline-none focus:border-brand-gold focus:bg-white/10 focus:ring-2 focus:ring-brand-gold/20 transition-all duration-200 text-sm outline-none cursor-pointer"
+                    required
+                  >
+                    <option value="">Sélectionner</option>
+                    {KEYS.map((k) => (
+                      <option key={k} value={k}>
+                        {k}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>

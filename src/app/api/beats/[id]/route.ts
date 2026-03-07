@@ -1,173 +1,163 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
-import { IncomingForm } from "formidable";
-import fs from "fs";
 import path from "path";
+import { writeFile, mkdir } from "fs/promises";
+
+// Helper pour sauvegarder un fichier
+async function saveUploadedFile(file: File, subfolder = "covers"): Promise<string> {
+  const uploadDir = path.join(process.cwd(), "public", "uploads", subfolder);
+  await mkdir(uploadDir, { recursive: true });
+  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const filepath = path.join(uploadDir, filename);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await writeFile(filepath, buffer);
+  return filename;
+}
 
 export async function PATCH(request: NextRequest, context: any) {
   try {
-    // Supporte tous les cas (Promise, objet direct, etc.)
     let ctx = context;
     if (typeof ctx?.then === "function") ctx = await ctx;
     let params = ctx?.params;
     if (typeof params?.then === "function") params = await params;
     const id = params?.id;
-    console.log("[PATCH /api/beats/[id]] params:", params, "id:", id);
+
     if (!id || typeof id !== "string") {
-      // Helper pour extraire la string d'un champ FormData (tableau ou string)
-      function getField(val: any) {
-        if (Array.isArray(val)) return val[0];
-        return val;
-      }
-      return NextResponse.json(
-        { error: "ID manquant ou invalide" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "ID manquant ou invalide" }, { status: 400 });
     }
+
     const token = request.headers.get("authorization")?.split(" ")[1];
-    if (!token)
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    if (!token) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
     const decoded = verifyToken(token);
-    if (!decoded)
-      return NextResponse.json({ error: "Token invalide" }, { status: 401 });
+    if (!decoded) return NextResponse.json({ error: "Token invalide" }, { status: 401 });
 
     const beat = await prisma.beat.findUnique({ where: { id } });
-    if (!beat)
-      return NextResponse.json({ error: "Beat introuvable" }, { status: 404 });
+    if (!beat) return NextResponse.json({ error: "Beat introuvable" }, { status: 404 });
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { role: true },
+      select: { role: true, subscription: { select: { plan: true } } },
     });
-    if (!user)
-      return NextResponse.json(
-        { error: "Utilisateur introuvable" },
-        { status: 404 },
-      );
+    if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
 
     if (beat.sellerId !== decoded.userId && user.role !== "ADMIN") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
+    const plan = user.subscription?.plan || "FREEMIUM";
     const contentType = request.headers.get("content-type") || "";
     let data: any = {};
-    let coverImage: string | null = null;
 
     if (contentType.includes("multipart/form-data")) {
-      // --- Parse le form-data (cover + champs texte) ---
-      try {
-        const uploadDir = path.join(process.cwd(), "public/uploads/covers");
-        if (!fs.existsSync(uploadDir))
-          fs.mkdirSync(uploadDir, { recursive: true });
-        const form = new IncomingForm({
-          uploadDir,
-          keepExtensions: true,
-          maxFileSize: 10 * 1024 * 1024, // 10MB
-        });
+      const rawData = await request.formData();
+      data = Object.fromEntries(rawData.entries());
+      data.genre = rawData.getAll("genre");
+      data.mood = rawData.getAll("mood");
+      data.instruments = rawData.getAll("instruments");
 
-        // Bufferise le body
-        const buffer = Buffer.from(await request.arrayBuffer());
-        // formidable attend un stream, on lui donne un Readable
-        const { Readable } = require("stream");
-        const stream = new Readable();
-        stream.push(buffer);
-        stream.push(null);
+      // 1. Cover Image
+      const coverFile = data.cover;
+      if (coverFile instanceof File && coverFile.size > 0) {
+        if (coverFile.type !== "image/jpeg" && coverFile.type !== "image/png" && coverFile.type !== "image/jpg") {
+          return NextResponse.json({ error: "La cover doit obligatoirement être au format PNG ou JPG." }, { status: 400 });
+        }
+        data.coverImage = await saveUploadedFile(coverFile, "covers");
+      }
 
-        // Crée un faux objet req avec headers pour formidable
-        const fakeReq = Object.assign(stream, {
-          headers: Object.fromEntries(request.headers.entries()),
-        });
-        const parsed = await new Promise((resolve, reject) => {
-          form.parse(fakeReq, (err, fields, files) => {
-            if (err) reject(err);
-            else resolve({ fields, files });
-          });
-        });
-        // @ts-ignore
-        data = parsed.fields;
-        // @ts-ignore
-        const files = parsed.files;
-        if (files.cover && files.cover[0]) {
-          // @ts-ignore
-          const file = files.cover[0];
-          coverImage = path.basename(file.filepath);
-        } else {
-          coverImage = beat.coverImage;
+      // 2. MP3 File
+      const mp3File = data.mp3File;
+      if (mp3File instanceof File && mp3File.size > 0) {
+        if (!mp3File.name.toLowerCase().endsWith(".mp3") && mp3File.type !== "audio/mpeg" && mp3File.type !== "audio/mp3") {
+          return NextResponse.json({ error: "Le fichier principal doit obligatoirement être un MP3 (.mp3)." }, { status: 400 });
         }
-      } catch (err) {
-        console.error("Erreur upload cover:", err);
-        let msg = "";
-        if (err instanceof Error) {
-          msg = err.message;
-        } else if (typeof err === "string") {
-          msg = err;
-        } else {
-          msg = JSON.stringify(err);
+        data.mp3FileUrl = await saveUploadedFile(mp3File, "beats");
+        data.previewUrl = data.mp3FileUrl; // Same as mp3FileUrl
+      }
+
+      // 3. WAV File
+      const wavFile = data.wavFile;
+      if (wavFile instanceof File && wavFile.size > 0) {
+        if (plan === "FREEMIUM") {
+          return NextResponse.json({ error: "La formule Freemium n'autorise pas l'upload de WAV." }, { status: 403 });
         }
-        return NextResponse.json(
-          { error: "Erreur upload cover: " + msg },
-          { status: 500 },
-        );
+        if (!wavFile.name.toLowerCase().endsWith(".wav") && wavFile.type !== "audio/wav" && wavFile.type !== "audio/x-wav") {
+          return NextResponse.json({ error: "Le fichier Haute Qualité doit obligatoirement être un WAV (.wav)." }, { status: 400 });
+        }
+        data.wavFileUrl = await saveUploadedFile(wavFile, "beats");
+      }
+
+      // 4. Trackout File
+      const trackoutFile = data.trackoutFile;
+      if (trackoutFile instanceof File && trackoutFile.size > 0) {
+        const hasWavNow = data.wavFileUrl || beat.wavFileUrl;
+        if (!hasWavNow) {
+          return NextResponse.json({ error: "L'upload d'un Trackout nécessite aussi l'upload du fichier WAV." }, { status: 400 });
+        }
+        if (plan !== "PREMIUM_MONTHLY" && plan !== "PREMIUM_YEARLY") {
+          return NextResponse.json({ error: "La formule Standard/Freemium n'autorise pas l'upload de Trackouts." }, { status: 403 });
+        }
+        data.trackoutFileUrl = await saveUploadedFile(trackoutFile, "trackouts");
       }
     } else {
-      // --- JSON classique ---
-      try {
-        data = await request.json();
-      } catch {
-        return NextResponse.json(
-          { error: "Le body doit être du JSON valide." },
-          { status: 400 },
-        );
-      }
-      coverImage = data.coverImage ?? beat.coverImage;
+      data = await request.json();
     }
 
-    // Helper pour extraire la string d'un champ FormData (tableau ou string)
-    function getField(val: any) {
-      if (Array.isArray(val)) return val[0];
-      return val;
+    // Checking final states of files
+    const finalWavUrl = data.wavFileUrl ? `/uploads/beats/${data.wavFileUrl}` : beat.wavFileUrl;
+    const finalTrackoutUrl = data.trackoutFileUrl ? `/uploads/trackouts/${data.trackoutFileUrl}` : beat.trackoutFileUrl;
+
+    const basicPrice = data.basicPrice ? Number(data.basicPrice) : beat.basicPrice;
+    const premiumPrice = data.premiumPrice !== undefined && data.premiumPrice !== ""
+      ? Number(data.premiumPrice)
+      : beat.premiumPrice;
+    const exclusivePrice = data.exclusivePrice !== undefined && data.exclusivePrice !== ""
+      ? Number(data.exclusivePrice)
+      : beat.exclusivePrice;
+
+    // Prices and file mismatch checks: only block if user explicitly sets 0 when WAV present
+    if (finalWavUrl && data.premiumPrice !== undefined && Number(data.premiumPrice) <= 0) {
+      return NextResponse.json({ error: "Le prix Non-Exclusif (WAV) est obligatoire car le beat contient un fichier WAV." }, { status: 400 });
     }
-    // Correction des types pour Prisma
+    if (!finalWavUrl && data.premiumPrice && Number(data.premiumPrice) > 0) {
+      return NextResponse.json({ error: "Vous ne pouvez pas définir de prix Non-Exclusif sans fichier WAV." }, { status: 400 });
+    }
+    if (finalTrackoutUrl && data.exclusivePrice !== undefined && Number(data.exclusivePrice) <= 0) {
+      return NextResponse.json({ error: "Le prix Exclusif (Trackout) est obligatoire car le beat contient un fichier Trackout." }, { status: 400 });
+    }
+    if (!finalTrackoutUrl && data.exclusivePrice && Number(data.exclusivePrice) > 0) {
+      return NextResponse.json({ error: "Vous ne pouvez pas définir de prix Exclusif sans fichier Trackout." }, { status: 400 });
+    }
+
     const updateData: any = {
-      title: getField(data.title) ?? beat.title,
-      description: getField(data.description) ?? beat.description,
-      genre: Array.isArray(data.genre)
-        ? data.genre
-        : data.genre
-          ? [data.genre]
-          : beat.genre,
-      mood: Array.isArray(data.mood)
-        ? data.mood
-        : data.mood
-          ? [data.mood]
-          : beat.mood,
-      bpm: data.bpm ? Number(getField(data.bpm)) : beat.bpm,
-      key: getField(data.key) ?? beat.key,
-      tags: Array.isArray(data.tags)
-        ? data.tags
-        : typeof data.tags === "string"
-          ? data.tags
-              .split(",")
-              .map((t: string) => t.trim())
-              .filter(Boolean)
-          : beat.tags,
-      coverImage,
-      status: getField(data.status) ?? beat.status,
-      seoTitle: getField(data.seoTitle) ?? beat.seoTitle,
-      seoDescription: getField(data.seoDescription) ?? beat.seoDescription,
-      basicPrice: data.basicPrice
-        ? Number(getField(data.basicPrice))
-        : beat.basicPrice,
-      premiumPrice: data.premiumPrice
-        ? Number(getField(data.premiumPrice))
-        : beat.premiumPrice,
-      exclusivePrice: data.exclusivePrice
-        ? Number(getField(data.exclusivePrice))
-        : beat.exclusivePrice,
-      duration: data.duration ? Number(getField(data.duration)) : beat.duration,
+      title: data.title ?? beat.title,
+      description: data.description ?? beat.description,
+      genre: data.genre && data.genre.length ? data.genre : beat.genre,
+      mood: data.mood && data.mood.length ? data.mood : beat.mood,
+      instruments: data.instruments && data.instruments.length ? data.instruments : beat.instruments,
+      bpm: data.bpm ? Number(data.bpm) : beat.bpm,
+      key: data.key ?? beat.key,
+      tags: typeof data.tags === "string" ? data.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : beat.tags,
+      status: data.status ?? beat.status,
+      seoTitle: data.seoTitle ?? beat.seoTitle,
+      seoDescription: data.seoDescription ?? beat.seoDescription,
+      basicPrice,
+      premiumPrice: finalWavUrl ? premiumPrice : null,
+      exclusivePrice: finalTrackoutUrl ? exclusivePrice : null,
+      duration: data.duration ? Number(data.duration) : beat.duration,
     };
+
+    if (data.coverImage) updateData.coverImage = `/uploads/covers/${data.coverImage}`;
+    if (data.mp3FileUrl) updateData.mp3FileUrl = `/uploads/beats/${data.mp3FileUrl}`;
+    if (data.previewUrl) updateData.previewUrl = `/uploads/beats/${data.previewUrl}`;
+    if (data.wavFileUrl) updateData.wavFileUrl = `/uploads/beats/${data.wavFileUrl}`;
+    if (data.trackoutFileUrl) updateData.trackoutFileUrl = `/uploads/trackouts/${data.trackoutFileUrl}`;
+
+    // Update prices if needed to prevent bad data
+    if (!finalWavUrl) updateData.premiumPrice = null;
+    if (!finalTrackoutUrl) updateData.exclusivePrice = null;
 
     const updated = await prisma.beat.update({
       where: { id },
@@ -188,26 +178,19 @@ export async function DELETE(
   try {
     const { id } = await params;
     const token = request.headers.get("authorization")?.split(" ")[1];
-    if (!token)
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    if (!token) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
     const decoded = verifyToken(token);
-    if (!decoded)
-      return NextResponse.json({ error: "Token invalide" }, { status: 401 });
+    if (!decoded) return NextResponse.json({ error: "Token invalide" }, { status: 401 });
 
     const beat = await prisma.beat.findUnique({ where: { id } });
-    if (!beat)
-      return NextResponse.json({ error: "Beat introuvable" }, { status: 404 });
+    if (!beat) return NextResponse.json({ error: "Beat introuvable" }, { status: 404 });
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: { role: true },
     });
-    if (!user)
-      return NextResponse.json(
-        { error: "Utilisateur introuvable" },
-        { status: 404 },
-      );
+    if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
 
     if (beat.sellerId !== decoded.userId && user.role !== "ADMIN") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
