@@ -653,22 +653,21 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-center mt-10">
+              <div className="flex justify-end mt-10 pt-8 border-t border-white/5">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="relative group px-12 py-4 rounded-full font-bold text-lg text-brand-purple overflow-hidden flex items-center gap-3 disabled:opacity-50 transition-all hover:scale-105"
+                  className="relative group px-10 py-3 rounded-full font-bold text-brand-purple overflow-hidden flex items-center gap-3 disabled:opacity-50 transition-all hover:scale-105"
                 >
-                  <div className="absolute inset-0 bg-brand-gold bg-opacity-100 group-hover:bg-amber-400 transition-colors"></div>
+                  <div className="absolute inset-0 bg-brand-gold group-hover:bg-amber-400 transition-colors"></div>
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-white via-white/50 to-transparent blur-md transition-opacity"></div>
-
                   <span className="relative z-10 flex items-center gap-2">
                     {loading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
-                      <Save className="w-6 h-6" />
+                      <Save className="w-5 h-5" />
                     )}
-                    {loading ? "Enregistrement en cours..." : "Enregistrer les modifications"}
+                    {loading ? "Enregistrement..." : "Enregistrer les modifications"}
                   </span>
                 </button>
               </div>
@@ -684,100 +683,121 @@ export default function SettingsPage() {
                 onSubmit={handlePasswordSave}
                 className="glass rounded-3xl p-8"
               >
-                <h2 className="text-2xl font-bold font-display mb-6 flex items-center gap-2">
-                  <Lock className="w-6 h-6 text-brand-gold" /> Changer le mot de
-                  passe
-                </h2>
-                <div className="space-y-4 max-w-md">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-300 mb-2 block">
-                      Mot de passe actuel
-                    </label>
-                    <div className="relative">
-                      <input
-                        name="currentPassword"
-                        required
-                        type={showPassword ? "text" : "password"}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50 pr-12"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 flex items-center justify-center">
+                    <Lock className="w-6 h-6 text-brand-gold" />
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-slate-300 mb-2 block">
-                      Nouveau mot de passe
-                    </label>
-                    <input
-                      name="newPassword"
-                      required
-                      type="password"
-                      minLength={8}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50"
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                      Minimum 8 caractères avec majuscules, chiffres et
-                      caractères spéciaux
+                    <h2 className="text-2xl font-bold font-display">
+                      Sécurité du compte
+                    </h2>
+                    <p className="text-sm text-slate-400">
+                      Gérez votre mot de passe pour protéger l'accès à votre compte.
                     </p>
                   </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-300 mb-2 block">
-                      Confirmer le mot de passe
-                    </label>
-                    <input
-                      name="confirmPassword"
-                      required
-                      type="password"
-                      minLength={8}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50"
-                    />
-                  </div>
-                  <div className="flex justify-center mt-8">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="relative group px-10 py-3 rounded-full font-bold text-brand-purple overflow-hidden flex items-center gap-3 disabled:opacity-50 transition-all hover:scale-105"
-                    >
-                      <div className="absolute inset-0 bg-brand-gold bg-opacity-100 group-hover:bg-amber-400 transition-colors"></div>
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-white via-white/50 to-transparent blur-md transition-opacity"></div>
+                </div>
 
-                      <span className="relative z-10 flex items-center gap-2">
-                        {loading ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <Save className="w-5 h-5" />
-                        )}
-                        {loading ? "Modification..." : "Modifier le mot de passe"}
-                      </span>
-                    </button>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-sm font-semibold text-slate-300 mb-2 block">
+                        Mot de passe actuel
+                      </label>
+                      <div className="relative">
+                        <input
+                          name="currentPassword"
+                          required
+                          type={showPassword ? "text" : "password"}
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50 pr-12 transition-colors"
+                          placeholder="••••••••"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-sm font-semibold text-slate-300 mb-2 block">
+                        Nouveau mot de passe
+                      </label>
+                      <input
+                        name="newPassword"
+                        required
+                        type="password"
+                        minLength={8}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50 transition-colors"
+                        placeholder="••••••••"
+                      />
+                      <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-slate-400"></span> Minimum 8 caractères, majuscules, chiffres et symboles.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-slate-300 mb-2 block">
+                        Confirmer le mot de passe
+                      </label>
+                      <input
+                        name="confirmPassword"
+                        required
+                        type="password"
+                        minLength={8}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50 transition-colors"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-10 pt-8 border-t border-white/5">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="relative group px-10 py-3 rounded-full font-bold text-brand-purple overflow-hidden flex items-center gap-3 disabled:opacity-50 transition-all hover:scale-105"
+                  >
+                    <div className="absolute inset-0 bg-brand-gold group-hover:bg-amber-400 transition-colors"></div>
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-white via-white/50 to-transparent blur-md transition-opacity"></div>
+                    <span className="relative z-10 flex items-center gap-2">
+                      {loading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Save className="w-5 h-5" />
+                      )}
+                      {loading ? "Mise à jour..." : "Mettre à jour le mot de passe"}
+                    </span>
+                  </button>
                 </div>
               </form>
 
-              <div className="glass rounded-3xl p-8 border border-red-500/20">
-                <h2 className="text-2xl font-bold font-display mb-4 flex items-center gap-2 text-red-400">
-                  <Trash2 className="w-6 h-6" /> Zone dangereuse
-                </h2>
-                <p className="text-slate-400 mb-4">
-                  La suppression de votre compte est irréversible. Toutes vos
-                  données seront perdues.
-                </p>
-                <button
-                  onClick={handleAccountDeletion}
-                  type="button"
-                  className="glass px-6 py-3 rounded-full font-semibold text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors"
-                >
-                  Supprimer mon compte
-                </button>
+              <div className="glass rounded-3xl p-8 border border-red-500/10 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-2 h-full bg-red-500/80"></div>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pl-4">
+                  <div>
+                    <h2 className="text-2xl font-bold font-display mb-2 flex items-center gap-3 text-red-400">
+                      <Trash2 className="w-6 h-6" /> Zone de danger
+                    </h2>
+                    <p className="text-slate-400 max-w-xl text-sm leading-relaxed">
+                      La suppression de votre compte est une action <strong className="text-white">irréversible</strong>. Toutes vos données, y compris vos achats, vos beats postés et votre historique seront définitivement perdus.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleAccountDeletion}
+                    type="button"
+                    className="shrink-0 px-8 py-4 rounded-full font-bold text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)] hover:shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:scale-105"
+                  >
+                    Supprimer le compte
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -851,7 +871,7 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-center mt-8">
+              <div className="flex justify-end mt-10 pt-8 border-t border-white/5">
                 <button
                   type="submit"
                   disabled={loading}
@@ -940,7 +960,7 @@ export default function SettingsPage() {
                 </div>
 
               </div>
-              <div className="flex justify-center mt-8">
+              <div className="flex justify-end mt-10 pt-8 border-t border-white/5">
                 <button
                   type="submit"
                   disabled={loading}
