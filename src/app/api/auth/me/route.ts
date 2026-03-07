@@ -54,6 +54,13 @@ export async function GET(req: NextRequest) {
             verified: true,
           },
         },
+        subscription: {
+          select: {
+            plan: true,
+            status: true,
+            currentPeriodEnd: true,
+          }
+        }
       },
     });
 
@@ -81,10 +88,10 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { 
+    const {
       firstName, lastName, displayName, email, bio, website, phone, instagram, twitter, youtube, country, address, city, postalCode,
       twoFactorEnabled, notificationPrefs, musicPrefs,
-      artistName, description, genres, paypalEmail 
+      artistName, description, genres, paypalEmail
     } = body;
 
     const prisma = (await import("@/lib/prisma")).default;
@@ -145,6 +152,13 @@ export async function PUT(req: NextRequest) {
         musicPrefs: true,
         avatar: true,
         emailVerified: true,
+        subscription: {
+          select: {
+            plan: true,
+            status: true,
+            currentPeriodEnd: true,
+          }
+        }
       }
     });
 
@@ -179,11 +193,11 @@ export async function PUT(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       user: {
         ...updatedUser,
         sellerProfile: updatedSellerProfile
-      } 
+      }
     });
   } catch (error) {
     console.error("Error updating user profile:", error);

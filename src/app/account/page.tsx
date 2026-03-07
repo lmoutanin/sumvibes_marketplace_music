@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
-import { ShoppingBag, Download, Heart, Settings, Music, TrendingUp, Clock, ArrowRight, CreditCard, Star } from "lucide-react";
+import { ShoppingBag, Download, Heart, Settings, Music, TrendingUp, Clock, ArrowRight, CreditCard, Star, Crown } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
 interface Purchase {
@@ -32,7 +32,8 @@ interface Favorite {
     title: string;
     bpm: number;
     genre: string;
-    seller: {      id: string;      username: string;
+    seller: {
+      id: string; username: string;
       displayName?: string;
     };
   };
@@ -66,7 +67,7 @@ export default function AccountPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const purchasesData = await purchasesRes.json();
-      
+
       // Fetch favorites
       const favoritesRes = await fetch('/api/favorites?limit=3', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -132,12 +133,32 @@ export default function AccountPage() {
               <div className="flex-1 text-center md:text-left">
                 <h1 className="text-3xl font-bold font-display">{user.displayName || user.username}</h1>
                 <p className="text-slate-400">{user.email}</p>
-                <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
-                  <span className="glass px-3 py-1 rounded-full text-xs text-brand-gold font-bold">
-                  Artiste
-                  </span>
+                <div className="flex flex-col md:flex-row items-center gap-3 mt-4 justify-center md:justify-start">
+                  {user.subscription?.plan === "PREMIUM_MONTHLY" || user.subscription?.plan === "PREMIUM_YEARLY" ? (
+                    <div className="flex items-center gap-2 glass px-1.5 py-1.5 rounded-full border border-brand-gold/30 bg-brand-gold/5">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold text-slate-900 bg-gradient-to-r from-brand-gold to-amber-500 shadow-[0_0_15px_rgba(242,166,90,0.4)] flex items-center gap-1.5">
+                        <Crown className="w-3.5 h-3.5" /> Premium
+                      </span>
+                      {user.subscription.currentPeriodEnd && (
+                        <span className="text-xs text-brand-gold/90 font-medium pr-3">
+                          Jusqu'au {new Date(user.subscription.currentPeriodEnd).toLocaleDateString("fr-FR")}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 glass px-1.5 py-1.5 rounded-full border border-white/10 bg-white/5">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold text-white bg-white/10 shadow-inner">
+                        Freemium
+                      </span>
+                      <Link href="/account/settings?tab=subscription" className="text-[10px] text-brand-gold hover:text-amber-400 font-bold pr-3 uppercase tracking-wider transition-colors flex items-center gap-1">
+                        Passer Pro ✨
+                      </Link>
+                    </div>
+                  )}
+
                   {user.createdAt && (
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-400 flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 shadow-inner">
+                      <Clock className="w-3.5 h-3.5" />
                       Membre depuis {new Date(user.createdAt).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
                     </span>
                   )}

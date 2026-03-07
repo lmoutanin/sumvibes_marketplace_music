@@ -25,6 +25,11 @@ interface User {
   twoFactorEnabled?: boolean;
   notificationPrefs?: any;
   musicPrefs?: any;
+  subscription?: {
+    plan: "FREEMIUM" | "PREMIUM_MONTHLY" | "PREMIUM_YEARLY";
+    status: "ACTIVE" | "CANCELED" | "PAST_DUE" | "EXPIRED";
+    currentPeriodEnd?: string | null;
+  } | null;
   sellerProfile?: {
     artistName: string;
     description: string | null;

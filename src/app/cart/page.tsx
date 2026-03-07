@@ -24,9 +24,19 @@ export default function CartPage() {
 
   console.log(cart);
 
-  const subtotal = cart.total
-  const tax = (subtotal * 0.2).toFixed(2);
-  const total = (subtotal + parseFloat(tax)).toFixed(2);
+  const subtotal = cart.total;
+
+  // Checking Premium status
+  const isPremium = user?.subscription?.plan === "PREMIUM_MONTHLY" || user?.subscription?.plan === "PREMIUM_YEARLY";
+
+  // Calculate platform fee
+  const platformFee = isPremium ? 0 : subtotal * 0.10;
+
+  // Calculate tax (20% on subtotal + platform fee)
+  const tax = ((subtotal + platformFee) * 0.2).toFixed(2);
+
+  // Final total
+  const total = (subtotal + platformFee + parseFloat(tax)).toFixed(2);
 
   if (!user) {
     return (
@@ -107,7 +117,15 @@ export default function CartPage() {
                   <div className="space-y-4 mb-6">
                     <div className="flex justify-between text-slate-300">
                       <span>Sous-total</span>
-                      <span>{subtotal} €</span>
+                      <span>{subtotal.toFixed(2)} €</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Frais de service (10%)</span>
+                      {isPremium ? (
+                        <span className="text-brand-gold font-bold">0.00 €</span>
+                      ) : (
+                        <span>{platformFee.toFixed(2)} €</span>
+                      )}
                     </div>
                     <div className="flex justify-between text-slate-300">
                       <span>TVA (20%)</span>
@@ -116,23 +134,6 @@ export default function CartPage() {
                     <div className="border-t border-white/10 pt-4 flex justify-between">
                       <span className="font-bold text-lg">Total</span>
                       <span className="text-2xl font-bold text-gradient">{total} €</span>
-                    </div>
-                  </div>
-
-                  {/* Promo Code */}
-                  <div className="mb-6">
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input
-                          type="text"
-                          placeholder="Code promo"
-                          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-brand-gold/50"
-                        />
-                      </div>
-                      <button className="glass px-4 py-3 rounded-xl text-sm font-semibold hover:bg-white/10">
-                        Appliquer
-                      </button>
                     </div>
                   </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
@@ -27,6 +27,8 @@ import {
   Instagram,
   Twitter,
   Youtube,
+  CreditCard,
+  Crown
 } from "lucide-react";
 
 // (Dynamic tabs will be created inside the component based on user role)
@@ -57,6 +59,15 @@ export default function SettingsPage() {
   const { user, token, refreshUser, logout } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab) setActiveTab(tab);
+    }
+  }, []);
+
   const [showPassword, setShowPassword] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -93,7 +104,13 @@ export default function SettingsPage() {
     }
   };
 
-  const tabs = baseTabs;
+  const tabs = [
+    { id: "profile", label: "Profil", icon: User },
+    ...(user?.role === "BUYER" ? [{ id: "subscription", label: "Abonnement", icon: Crown }] : []),
+    { id: "security", label: "Sécurité", icon: Lock },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "preferences", label: "Préférences", icon: Music },
+  ];
 
   const handleSave = () => {
     setSaved(true);
@@ -309,6 +326,35 @@ export default function SettingsPage() {
     }
   };
 
+  const handleUpgradeToPremium = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const res = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ plan: "PREMIUM_MONTHLY" })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        await refreshUser();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        setError(data.error || "Erreur lors de la souscription");
+      }
+    } catch (err) {
+      setError("Erreur réseau");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-gradient-premium">
       <Navbar />
@@ -352,6 +398,89 @@ export default function SettingsPage() {
           {error && (
             <div className="glass rounded-xl p-4 mb-6 border border-red-500/20 bg-red-500/5 text-red-400 text-sm font-semibold">
               ❌ {error}
+            </div>
+          )}
+
+          {/* Subscription Tab (BUYER only) */}
+          {activeTab === "subscription" && user?.role === "BUYER" && (
+            <div className="space-y-6">
+              <div className="glass rounded-3xl p-8">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 flex items-center justify-center">
+                    <Crown className="w-6 h-6 text-brand-gold" />
+                  </div>
+                  <div>
+                    <h2 id="subscription" className="text-2xl font-bold font-display">
+                      Mon Abonnement
+                    </h2>
+                    <p className="text-sm text-slate-400">
+                      Gérez votre formule pour bénéficier de réductions sur vos achats.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Freemium Card */}
+                  <div className={`p-6 rounded-3xl border ${!user.subscription || user.subscription.plan === "FREEMIUM" ? "border-brand-gold bg-brand-gold/5" : "border-white/10 glass"}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-1">Artiste Freemium</h3>
+                        <p className="text-sm text-slate-400">Le plan standard sans engagement.</p>
+                      </div>
+                      {(!user.subscription || user.subscription.plan === "FREEMIUM") && (
+                        <span className="px-3 py-1 bg-brand-gold/20 text-brand-gold text-xs font-bold rounded-full">Actuel</span>
+                      )}
+                    </div>
+                    <div className="my-6">
+                      <span className="text-3xl font-display font-bold text-white">0€</span>
+                      <span className="text-slate-400">/mois</span>
+                    </div>
+                    <ul className="space-y-3 mb-8 text-sm text-slate-300">
+                      <li className="flex items-center gap-2"><span className="text-brand-gold">✓</span> Accès complet au catalogue</li>
+                      <li className="flex items-center gap-2"><span className="text-brand-gold">✓</span> Messagerie avec les beatmakers</li>
+                      <li className="flex items-center gap-2 text-red-400 font-semibold"><span className="text-red-400">✗</span> 10% de frais de plateforme sur les achats</li>
+                    </ul>
+                  </div>
+
+                  {/* Premium Card */}
+                  <div className={`relative p-6 rounded-3xl border overflow-hidden ${user.subscription?.plan === "PREMIUM_MONTHLY" || user.subscription?.plan === "PREMIUM_YEARLY" ? "border-brand-gold bg-brand-gold/5" : "border-brand-purple/50 bg-brand-purple/10"}`}>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-brand-purple/20 blur-3xl -z-10 rounded-full mix-blend-screen"></div>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-1">Artiste Premium</h3>
+                        <p className="text-sm text-slate-400">Pour les artistes qui achètent régulièrement.</p>
+                      </div>
+                      {(user.subscription?.plan === "PREMIUM_MONTHLY" || user.subscription?.plan === "PREMIUM_YEARLY") && (
+                        <span className="px-3 py-1 bg-brand-gold/20 text-brand-gold text-xs font-bold rounded-full">Actuel</span>
+                      )}
+                    </div>
+                    <div className="my-6">
+                      <span className="text-3xl font-display font-bold text-white">4.99€</span>
+                      <span className="text-slate-400">/mois</span>
+                    </div>
+                    <ul className="space-y-3 mb-8 text-sm text-slate-300">
+                      <li className="flex items-center gap-2"><span className="text-brand-gold">✓</span> Accès complet au catalogue</li>
+                      <li className="flex items-center gap-2"><span className="text-brand-gold">✓</span> Messagerie avec les beatmakers</li>
+                      <li className="flex items-center gap-2"><span className="text-brand-gold">✓</span> <strong className="text-white">0% de frais</strong> sur tous vos achats de licences</li>
+                      <li className="flex items-center gap-2"><span className="text-brand-gold">✓</span> Badge "Premium" sur votre profil</li>
+                    </ul>
+
+                    {(!user.subscription || user.subscription?.plan === "FREEMIUM") ? (
+                      <button
+                        onClick={handleUpgradeToPremium}
+                        disabled={loading}
+                        className="w-full py-3 rounded-full font-bold text-brand-purple bg-gradient-to-r from-brand-gold to-amber-500 hover:from-amber-400 hover:to-brand-gold transition-all shadow-[0_0_20px_rgba(242,166,90,0.4)] flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Crown className="w-4 h-4" /> Passer à Premium</>}
+                      </button>
+                    ) : (
+                      <button className="w-full py-3 rounded-full font-bold text-slate-300 glass border border-white/10 hover:bg-white/5 transition-all">
+                        Gérer mon abonnement
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

@@ -25,107 +25,148 @@ enum UserStatus {
   DELETED
 }
 
+enum SubscriptionPlan {
+  FREEMIUM
+  PREMIUM_MONTHLY
+  PREMIUM_YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  EXPIRED
+}
+
 model User {
-  id            String      @id @default(cuid())
-  email         String      @unique
-  username      String      @unique
-  passwordHash  String
-  role          UserRole    @default(BUYER)
-  status        UserStatus  @default(ACTIVE)
-  
+  id           String     @id @default(cuid())
+  email        String     @unique
+  username     String     @unique
+  passwordHash String
+  role         UserRole   @default(BUYER)
+  status       UserStatus @default(ACTIVE)
+
   // Profile Info
-  firstName     String?
-  lastName      String?
-  displayName   String?
-  bio           String?     @db.Text
-  avatar        String?
-  coverImage    String?
-  website       String?
-  
+  firstName   String?
+  lastName    String?
+  displayName String?
+  bio         String? @db.Text
+  avatar      String?
+  coverImage  String?
+  website     String?
+
   // Contact & Social
-  phone         String?
-  instagram     String?
-  twitter       String?
-  youtube       String?
-  country       String?
-  address       String?
-  city          String?
-  postalCode    String?
-  
+  phone      String?
+  instagram  String?
+  twitter    String?
+  youtube    String?
+  country    String?
+  address    String?
+  city       String?
+  postalCode String?
+
   // Verification & Security
-  emailVerified Boolean     @default(false)
-  verifiedAt    DateTime?
-  twoFactorEnabled Boolean  @default(false)
-  
+  emailVerified    Boolean   @default(false)
+  verifiedAt       DateTime?
+  twoFactorEnabled Boolean   @default(false)
+
   // Preferences
   notificationPrefs Json?
   musicPrefs        Json?
-  
+
   // RGPD & Consent
-  gdprConsent   Boolean     @default(false)
-  marketingConsent Boolean  @default(false)
-  
+  gdprConsent      Boolean @default(false)
+  marketingConsent Boolean @default(false)
+
   // Timestamps
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  lastLoginAt   DateTime?
-  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
   // Relations
-  beats         Beat[]
-  services      Service[]
-  purchases     Purchase[]
-  sellerProfile SellerProfile?
-  reviews       Review[]
-  favorites     Favorite[]
-  cart          CartItem[]
-  messages      Message[]
-  forumPosts    ForumPost[]
-  forumComments ForumComment[]
-  referrals     Referral[]  @relation("Referrer")
-  referredBy    Referral?   @relation("Referred")
-  channelsAsUserOne Channel[] @relation("ChannelUserOne")
-  channelsAsUserTwo Channel[] @relation("ChannelUserTwo")
-  
+  beats             Beat[]
+  services          Service[]
+  purchases         Purchase[]
+  sellerProfile     SellerProfile?
+  reviews           Review[]
+  favorites         Favorite[]
+  cart              CartItem[]
+  messages          Message[]
+  forumPosts        ForumPost[]
+  forumComments     ForumComment[]
+  referrals         Referral[]     @relation("Referrer")
+  referredBy        Referral?      @relation("Referred")
+  channelsAsUserOne Channel[]      @relation("ChannelUserOne")
+  channelsAsUserTwo Channel[]      @relation("ChannelUserTwo")
+  subscription      Subscription?
+
   @@index([email])
   @@index([username])
   @@index([role])
 }
 
 model SellerProfile {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   // Business Info
-  artistName        String
-  description       String?  @db.Text
-  genres            String[] // Array of genres
-  
+  artistName  String
+  description String?  @db.Text
+  genres      String[] // Array of genres
+
   // Stats
-  totalSales        Int      @default(0)
-  totalRevenue      Decimal  @default(0) @db.Decimal(10, 2)
-  averageRating     Decimal? @db.Decimal(3, 2)
-  totalReviews      Int      @default(0)
-  
+  totalSales    Int      @default(0)
+  totalRevenue  Decimal  @default(0) @db.Decimal(10, 2)
+  averageRating Decimal? @db.Decimal(3, 2)
+  totalReviews  Int      @default(0)
+
   // Payment Info
-  stripeAccountId   String?
-  paypalEmail       String?
-  
+  stripeAccountId String?
+  paypalEmail     String?
+
   // Commission
-  commissionRate    Decimal  @default(15) @db.Decimal(5, 2) // Platform commission %
-  
+  commissionRate Decimal @default(15) @db.Decimal(5, 2) // Platform commission %
+
   // Verification
-  verified          Boolean  @default(false)
-  verifiedAt        DateTime?
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  verified   Boolean   @default(false)
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  withdrawals       Withdrawal[]
-  
+  withdrawals Withdrawal[]
+
   @@index([userId])
   @@index([verified])
+}
+
+// ============================================
+// SUBSCRIPTIONS (BUYER/ARTIST)
+// ============================================
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plan   SubscriptionPlan   @default(FREEMIUM)
+  status SubscriptionStatus @default(ACTIVE)
+
+  // Stripe integration
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }
 
 // ============================================
@@ -149,60 +190,60 @@ enum LicenseType {
 }
 
 model Beat {
-  id              String      @id @default(cuid())
-  sellerId        String
-  seller          User        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  
+  id       String @id @default(cuid())
+  sellerId String
+  seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
   // Beat Info
-  title           String
-  description     String?     @db.Text
-  slug            String      @unique
-  
+  title       String
+  description String? @db.Text
+  slug        String  @unique
+
   // Audio Files
-  previewUrl      String      // Watermarked preview (MP3)
-  mainFileUrl     String      // Full quality file (WAV)
-  coverImage      String?
-  
+  previewUrl  String // Watermarked preview (MP3)
+  mainFileUrl String // Full quality file (WAV)
+  coverImage  String?
+
   // Metadata
-  bpm             Int?
-  duration        Int?        // Duration in seconds
-  key             String?     // Musical key (C, D#, Am, etc.)
-  genre           String[]
-  mood            String[]    // Dark, Uplifting, Chill, etc.
-  instruments     String[]
-  tags            String[]
-  
+  bpm         Int?
+  duration    Int? // Duration in seconds
+  key         String? // Musical key (C, D#, Am, etc.)
+  genre       String[]
+  mood        String[] // Dark, Uplifting, Chill, etc.
+  instruments String[]
+  tags        String[]
+
   // Pricing & Licenses
-  basicPrice      Decimal?    @db.Decimal(10, 2)
-  premiumPrice    Decimal?    @db.Decimal(10, 2)
-  exclusivePrice  Decimal?    @db.Decimal(10, 2)
-  
+  basicPrice     Decimal? @db.Decimal(10, 2)
+  premiumPrice   Decimal? @db.Decimal(10, 2)
+  exclusivePrice Decimal? @db.Decimal(10, 2)
+
   // Stats
-  plays           Int         @default(0)
-  downloads       Int         @default(0)
-  sales           Int         @default(0)
-  averageRating   Decimal?    @db.Decimal(3, 2)
-  
+  plays         Int      @default(0)
+  downloads     Int      @default(0)
+  sales         Int      @default(0)
+  averageRating Decimal? @db.Decimal(3, 2)
+
   // Status
-  status          BeatStatus  @default(DRAFT)
-  featured        Boolean     @default(false)
-  
+  status   BeatStatus @default(DRAFT)
+  featured Boolean    @default(false)
+
   // SEO
-  seoTitle        String?
-  seoDescription  String?     @db.Text
-  seoKeywords     String[]
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  publishedAt     DateTime?
-  
+  seoTitle       String?
+  seoDescription String?  @db.Text
+  seoKeywords    String[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
   // Relations
-  licenses        License[]
-  purchases       Purchase[]
-  reviews         Review[]
-  favorites       Favorite[]
-  cartItems       CartItem[]
-  
+  licenses  License[]
+  purchases Purchase[]
+  reviews   Review[]
+  favorites Favorite[]
+  cartItems CartItem[]
+
   @@index([sellerId])
   @@index([status])
   @@index([genre])
@@ -211,27 +252,27 @@ model Beat {
 }
 
 model License {
-  id              String       @id @default(cuid())
-  beatId          String
-  beat            Beat         @relation(fields: [beatId], references: [id], onDelete: Cascade)
-  
-  type            LicenseType
-  name            String       // "Licence Basic", "Licence Premium", etc.
-  price           Decimal      @db.Decimal(10, 2)
-  
+  id     String @id @default(cuid())
+  beatId String
+  beat   Beat   @relation(fields: [beatId], references: [id], onDelete: Cascade)
+
+  type  LicenseType
+  name  String // "Licence Basic", "Licence Premium", etc.
+  price Decimal     @db.Decimal(10, 2)
+
   // License Terms
-  description     String?      @db.Text
-  distributionCopies Int?      // Number of copies allowed
-  streamingPlays  Int?         // Number of streaming plays
-  musicVideos     Int?         // Number of music videos
-  profitRadio     Boolean      @default(false)
-  
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
+  description        String? @db.Text
+  distributionCopies Int? // Number of copies allowed
+  streamingPlays     Int? // Number of streaming plays
+  musicVideos        Int? // Number of music videos
+  profitRadio        Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  purchases       Purchase[]
-  
+  purchases Purchase[]
+
   @@index([beatId])
   @@index([type])
 }
@@ -241,25 +282,25 @@ model License {
 // ============================================
 
 model Service {
-  id              String      @id @default(cuid())
-  sellerId        String
-  seller          User        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  
-  title           String
-  description     String      @db.Text
-  category        String      // "mixage", "ecriture", etc.
-  price           Decimal     @db.Decimal(10, 2)
-  deliveryTime    String?
-  location        String?
-  
-  rating          Decimal?    @db.Decimal(3, 2)
-  reviewsCount    Int         @default(0)
-  
-  featured        Boolean     @default(false)
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
+  id       String @id @default(cuid())
+  sellerId String
+  seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  title        String
+  description  String  @db.Text
+  category     String // "mixage", "ecriture", etc.
+  price        Decimal @db.Decimal(10, 2)
+  deliveryTime String?
+  location     String?
+
+  rating       Decimal? @db.Decimal(3, 2)
+  reviewsCount Int      @default(0)
+
+  featured Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([sellerId])
   @@index([category])
 }
@@ -282,41 +323,41 @@ enum PaymentMethod {
 }
 
 model Purchase {
-  id                String         @id @default(cuid())
-  buyerId           String
-  buyer             User           @relation(fields: [buyerId], references: [id])
-  beatId            String
-  beat              Beat           @relation(fields: [beatId], references: [id])
-  licenseId         String
-  license           License        @relation(fields: [licenseId], references: [id])
-  
+  id        String  @id @default(cuid())
+  buyerId   String
+  buyer     User    @relation(fields: [buyerId], references: [id])
+  beatId    String
+  beat      Beat    @relation(fields: [beatId], references: [id])
+  licenseId String
+  license   License @relation(fields: [licenseId], references: [id])
+
   // Payment
-  amount            Decimal        @db.Decimal(10, 2)
-  taxAmount         Decimal        @default(0) @db.Decimal(10, 2) // TVA
-  platformFee       Decimal        @db.Decimal(10, 2)
-  sellerEarnings    Decimal        @db.Decimal(10, 2)
-  
-  paymentMethod     PaymentMethod
-  paymentStatus     PaymentStatus  @default(PENDING)
-  
+  amount         Decimal @db.Decimal(10, 2)
+  taxAmount      Decimal @default(0) @db.Decimal(10, 2) // TVA
+  platformFee    Decimal @db.Decimal(10, 2)
+  sellerEarnings Decimal @db.Decimal(10, 2)
+
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+
   // Transaction IDs
-  stripePaymentId   String?
+  stripePaymentId     String?
   paypalTransactionId String?
-  
+
   // Files
   downloadUrl       String?
-  downloadCount     Int            @default(0)
+  downloadCount     Int       @default(0)
   downloadExpiresAt DateTime?
-  
+
   // Invoice & Contract
-  invoiceNumber     String
-  invoicePdfUrl     String?
-  contractPdfUrl    String?
-  
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  completedAt       DateTime?
-  
+  invoiceNumber  String
+  invoicePdfUrl  String?
+  contractPdfUrl String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
   @@index([buyerId])
   @@index([beatId])
   @@index([paymentStatus])
@@ -327,21 +368,21 @@ model Withdrawal {
   id              String        @id @default(cuid())
   sellerProfileId String
   sellerProfile   SellerProfile @relation(fields: [sellerProfileId], references: [id])
-  
-  amount          Decimal       @db.Decimal(10, 2)
-  status          PaymentStatus @default(PENDING)
-  method          PaymentMethod
-  
+
+  amount Decimal       @db.Decimal(10, 2)
+  status PaymentStatus @default(PENDING)
+  method PaymentMethod
+
   // Transfer IDs
   stripeTransferId String?
   paypalPayoutId   String?
-  
-  requestedAt     DateTime      @default(now())
-  processedAt     DateTime?
-  completedAt     DateTime?
-  
-  notes           String?       @db.Text
-  
+
+  requestedAt DateTime  @default(now())
+  processedAt DateTime?
+  completedAt DateTime?
+
+  notes String? @db.Text
+
   @@index([sellerProfileId])
   @@index([status])
 }
@@ -351,18 +392,18 @@ model Withdrawal {
 // ============================================
 
 model Review {
-  id          String   @id @default(cuid())
-  beatId      String
-  beat        Beat     @relation(fields: [beatId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  rating      Int      // 1-5
-  comment     String?  @db.Text
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id     String @id @default(cuid())
+  beatId String
+  beat   Beat   @relation(fields: [beatId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating  Int // 1-5
+  comment String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([beatId, userId])
   @@index([beatId])
   @@index([userId])
@@ -373,30 +414,30 @@ model Review {
 // ============================================
 
 model Favorite {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  beatId    String
-  beat      Beat     @relation(fields: [beatId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beatId String
+  beat   Beat   @relation(fields: [beatId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
-  
+
   @@unique([userId, beatId])
   @@index([userId])
   @@index([beatId])
 }
 
 model CartItem {
-  id          String      @id @default(cuid())
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  beatId      String
-  beat        Beat        @relation(fields: [beatId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beatId String
+  beat   Beat   @relation(fields: [beatId], references: [id], onDelete: Cascade)
 
   licenseType LicenseType @default(BASIC)
-  price       Decimal     @db.Decimal(10, 2) @default(0)
+  price       Decimal     @default(0) @db.Decimal(10, 2)
 
-  createdAt   DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([userId, beatId, licenseType])
   @@index([userId])
@@ -407,18 +448,18 @@ model CartItem {
 // ============================================
 
 model Message {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   senderId    String
-  sender      User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sender      User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
   recipientId String
-  
-  subject     String?
-  content     String   @db.Text
-  read        Boolean  @default(false)
-  
-  createdAt   DateTime @default(now())
-  readAt      DateTime?
-  
+
+  subject String?
+  content String  @db.Text
+  read    Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
   @@index([senderId])
   @@index([recipientId])
   @@index([read])
@@ -436,31 +477,31 @@ enum PostStatus {
 }
 
 model ForumPost {
-  id          String        @id @default(cuid())
-  authorId    String
-  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
-  title       String
-  content     String        @db.Text
-  slug        String        @unique
-  
+  id       String @id @default(cuid())
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  title   String
+  content String @db.Text
+  slug    String @unique
+
   // Categorization
-  category    String?
-  tags        String[]
-  
+  category String?
+  tags     String[]
+
   // Engagement
-  views       Int           @default(0)
-  likes       Int           @default(0)
-  
-  status      PostStatus    @default(PUBLISHED)
-  pinned      Boolean       @default(false)
-  
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
+  views Int @default(0)
+  likes Int @default(0)
+
+  status PostStatus @default(PUBLISHED)
+  pinned Boolean    @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  comments    ForumComment[]
-  
+  comments ForumComment[]
+
   @@index([authorId])
   @@index([category])
   @@index([status])
@@ -468,18 +509,18 @@ model ForumPost {
 }
 
 model ForumComment {
-  id          String     @id @default(cuid())
-  postId      String
-  post        ForumPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
-  authorId    String
-  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
-  content     String     @db.Text
-  likes       Int        @default(0)
-  
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  
+  id       String    @id @default(cuid())
+  postId   String
+  post     ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  content String @db.Text
+  likes   Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([postId])
   @@index([authorId])
 }
@@ -489,30 +530,30 @@ model ForumComment {
 // ============================================
 
 model BlogPost {
-  id             String   @id @default(cuid())
-  title          String
-  slug           String   @unique
-  excerpt        String?  @db.Text
-  content        String   @db.Text
-  coverImage     String?
-  
+  id         String  @id @default(cuid())
+  title      String
+  slug       String  @unique
+  excerpt    String? @db.Text
+  content    String  @db.Text
+  coverImage String?
+
   // SEO
   seoTitle       String?
   seoDescription String?  @db.Text
   seoKeywords    String[]
-  
+
   // Categorization
-  category       String?
-  tags           String[]
-  
+  category String?
+  tags     String[]
+
   // Stats
-  views          Int      @default(0)
-  
-  published      Boolean  @default(false)
-  publishedAt    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
+  views Int @default(0)
+
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@index([slug])
   @@index([category])
   @@index([published])
@@ -523,19 +564,19 @@ model BlogPost {
 // ============================================
 
 model Referral {
-  id           String   @id @default(cuid())
-  referrerId   String
-  referrer     User     @relation("Referrer", fields: [referrerId], references: [id])
-  referredId   String   @unique
-  referred     User     @relation("Referred", fields: [referredId], references: [id])
-  
-  code         String   @unique
-  reward       Decimal? @db.Decimal(10, 2)
-  rewardClaimed Boolean @default(false)
-  
-  createdAt    DateTime @default(now())
-  claimedAt    DateTime?
-  
+  id         String @id @default(cuid())
+  referrerId String
+  referrer   User   @relation("Referrer", fields: [referrerId], references: [id])
+  referredId String @unique
+  referred   User   @relation("Referred", fields: [referredId], references: [id])
+
+  code          String   @unique
+  reward        Decimal? @db.Decimal(10, 2)
+  rewardClaimed Boolean  @default(false)
+
+  createdAt DateTime  @default(now())
+  claimedAt DateTime?
+
   @@index([referrerId])
   @@index([code])
 }
@@ -545,24 +586,24 @@ model Referral {
 // ============================================
 
 model Analytics {
-  id        String   @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Event tracking
-  eventType String   // page_view, beat_play, download, etc.
-  entityId  String?  // ID of beat, user, etc.
+  eventType  String // page_view, beat_play, download, etc.
+  entityId   String? // ID of beat, user, etc.
   entityType String? // beat, user, post, etc.
-  
+
   // Session Info
   userId    String?
   sessionId String?
   ipAddress String?
   userAgent String?
-  
+
   // Additional Data
-  metadata  Json?
-  
+  metadata Json?
+
   createdAt DateTime @default(now())
-  
+
   @@index([eventType])
   @@index([userId])
   @@index([createdAt])
@@ -573,12 +614,12 @@ model Analytics {
 // ============================================
 
 model Channel {
-  id          String   @id @default(cuid())
-  userOneId   String
-  userOne     User     @relation("ChannelUserOne", fields: [userOneId], references: [id], onDelete: Cascade)
-  userTwoId   String
-  userTwo     User     @relation("ChannelUserTwo", fields: [userTwoId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userOneId String
+  userOne   User     @relation("ChannelUserOne", fields: [userOneId], references: [id], onDelete: Cascade)
+  userTwoId String
+  userTwo   User     @relation("ChannelUserTwo", fields: [userTwoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   @@unique([userOneId, userTwoId])
   @@index([userOneId])

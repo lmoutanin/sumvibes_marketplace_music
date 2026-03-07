@@ -13,7 +13,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import {
   Music, Play, Pause, Search, SlidersHorizontal, Grid3X3, List,
   Heart, ShoppingCart, ChevronDown, Clock,
-  Volume2, VolumeX,
+  Volume2, VolumeX, X, Check, Zap
 } from "lucide-react";
 import { useBeats } from "@/hooks/useBeats";
 import { LicensePickerModal, LicenseType, buildLicenses, coverSrc } from "@/components/catalogue/LicensePickerModal";
@@ -112,7 +112,7 @@ export default function CataloguePage() {
           setLikedIds(new Set(data.favorites.map((f: any) => f.beatId)));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -148,9 +148,9 @@ export default function CataloguePage() {
         setProgress((audio.currentTime / audio.duration) * 100);
       }
     };
-    const onEnded  = () => { setIsPlayingAudio(false); setProgress(0); setCurrentTime(0); };
-    const onWaiting  = () => setIsBuffering(true);
-    const onPlaying  = () => setIsBuffering(false);
+    const onEnded = () => { setIsPlayingAudio(false); setProgress(0); setCurrentTime(0); };
+    const onWaiting = () => setIsBuffering(true);
+    const onPlaying = () => setIsBuffering(false);
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("waiting", onWaiting);
@@ -228,8 +228,8 @@ export default function CataloguePage() {
       return true;
     });
     result = [...result].sort((a, b) => {
-      if (sortBy === "popular")    return (b.plays ?? 0) - (a.plays ?? 0);
-      if (sortBy === "price_low")  return Number(a.basicPrice ?? 0) - Number(b.basicPrice ?? 0);
+      if (sortBy === "popular") return (b.plays ?? 0) - (a.plays ?? 0);
+      if (sortBy === "price_low") return Number(a.basicPrice ?? 0) - Number(b.basicPrice ?? 0);
       if (sortBy === "price_high") return Number(b.basicPrice ?? 0) - Number(a.basicPrice ?? 0);
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
@@ -447,10 +447,10 @@ export default function CataloguePage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {beats.map((beat) => {
                   const genre0 = beat.genre?.[0] ?? "";
-                  const mood0  = beat.mood?.[0]  ?? "";
+                  const mood0 = beat.mood?.[0] ?? "";
                   const gradient = GENRE_GRADIENT[genre0] ?? "from-brand-purple/30 to-brand-pink/25";
-                  const emoji    = GENRE_EMOJI[genre0] ?? "🎵";
-                  const isLiked  = likedIds.has(beat.id);
+                  const emoji = GENRE_EMOJI[genre0] ?? "🎵";
+                  const isLiked = likedIds.has(beat.id);
                   const isActive = activeBeatId === beat.id;
                   const isPlaying = isActive && isPlayingAudio;
                   const dur = formatDuration(beat.duration);
@@ -506,9 +506,9 @@ export default function CataloguePage() {
               <div className="space-y-3">
                 {beats.map((beat) => {
                   const genre0 = beat.genre?.[0] ?? "";
-                  const isActive  = activeBeatId === beat.id;
+                  const isActive = activeBeatId === beat.id;
                   const isPlaying = isActive && isPlayingAudio;
-                  const isLiked   = likedIds.has(beat.id);
+                  const isLiked = likedIds.has(beat.id);
                   const dur = formatDuration(beat.duration);
                   return (
                     <div key={beat.id} className={`glass rounded-xl p-4 flex items-center gap-4 transition-all hover:bg-white/5 ${isActive ? "ring-1 ring-brand-gold/40 bg-brand-gold/5" : ""}`}>
@@ -668,10 +668,10 @@ function ActivePill({ label, onRemove, color }: {
   label: string; onRemove: () => void; color: "gold" | "violet" | "emerald" | "blue";
 }) {
   const colors = {
-    gold:    "bg-brand-gold/15 border-brand-gold/30 text-brand-gold",
-    violet:  "bg-violet-400/15 border-violet-400/30 text-violet-300",
+    gold: "bg-brand-gold/15 border-brand-gold/30 text-brand-gold",
+    violet: "bg-violet-400/15 border-violet-400/30 text-violet-300",
     emerald: "bg-emerald-400/15 border-emerald-400/30 text-emerald-300",
-    blue:    "bg-blue-400/15 border-blue-400/30 text-blue-300",
+    blue: "bg-blue-400/15 border-blue-400/30 text-blue-300",
   };
   return (
     <button onClick={onRemove} className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all hover:opacity-75 ${colors[color]}`}>

@@ -67,6 +67,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Calcul des frais Freemium (10%) pour les BUYER non-Premium
+    let platformFee = 0;
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      include: { subscription: true }
+    });
+
+    if (user && user.role === "BUYER") {
+      const isPremium = user.subscription?.status === "ACTIVE" &&
+        (user.subscription?.plan === "PREMIUM_MONTHLY" || user.subscription?.plan === "PREMIUM_YEARLY");
+
+      if (!isPremium) {
+        platformFee = totalAmount * 0.10; // 10% de frais pour Freemium
+      }
+    }
+
+    const finalAmount = totalAmount + platformFee;
+
     // TODO: Créer une session de paiement Stripe
     // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
     // const session = await stripe.checkout.sessions.create({
