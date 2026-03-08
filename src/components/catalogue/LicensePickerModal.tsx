@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Music, Play, Pause, X, Check, ShoppingCart, Zap, Crown } from "lucide-react";
 
@@ -28,58 +29,65 @@ export function coverSrc(raw: string) {
 }
 
 export function buildLicenses(beat: any): LicenseOption[] {
-  const basic     = beat.basicPrice     != null ? Number(beat.basicPrice)     : null;
-  const premium   = beat.premiumPrice   != null ? Number(beat.premiumPrice)   : null;
+  const basic = beat.basicPrice != null ? Number(beat.basicPrice) : null;
+  const premium = beat.premiumPrice != null ? Number(beat.premiumPrice) : null;
   const exclusive = beat.exclusivePrice != null ? Number(beat.exclusivePrice) : null;
+
+  // Une option est disponible si son prix est défini ET > 0
+  const basicAvail = basic != null && basic > 0;
+  const premiumAvail = premium != null && premium > 0;
+  const exclusiveAvail = exclusive != null && exclusive > 0;
 
   return [
     {
       type: "BASIC",
       label: "Basic",
-      price: basic,
+      price: basicAvail ? basic : null,
       icon: <Music className="w-5 h-5" />,
       color: "from-slate-400/15 to-slate-500/5 border-white/10",
       accent: "text-slate-300",
       accentBg: "bg-white/10 hover:bg-white/20 text-white",
       perks: [
-        "MP3 Lease",
-        "Distribution jusqu'à 5 000 copies",
-        "2 000 streams",
-        "Non-exclusif",
+        "Fichier : MP3 Haute Qualité",
+        "Streams : Jusqu'à 5 000 écoutes (Spotify, Apple Music, etc.)",
+        "Distribution : Jusqu'à 2 500 copies (Ventes/Téléchargements)",
+        "Usage : Commercial Limité (Non-monétisé sur YouTube)",
+        "Crédit : Mention obligatoire : « Prod. by [Nom du Beatmaker] »",
       ],
     },
     {
       type: "PREMIUM",
-      label: "Premium",
-      price: premium,
+      label: "Premium (Non-Exclusif)",
+      price: premiumAvail ? premium : null,
       icon: <Zap className="w-5 h-5" />,
       color: "from-brand-gold/20 to-amber-500/5 border-brand-gold/30",
       accent: "text-brand-gold",
       accentBg: "bg-brand-gold hover:brightness-110 text-slate-900",
-      tag: "Populaire",
+      tag: premiumAvail ? "Populaire" : undefined,
       perks: [
-        "WAV + MP3 Lease",
-        "Distribution illimitée",
-        "100 000 streams",
-        "Utilisation commerciale",
-        "Non-exclusif",
+        "Fichiers : WAV + MP3",
+        "Streams : Jusqu'à 250 000 écoutes",
+        "Distribution : Jusqu'à 10 000 copies",
+        "Usage : Commercial Étendu (Plateformes, Clips, Concerts)",
+        "Monétisation : Autorisée sur toutes les plateformes",
+        "Crédit : Mention obligatoire : « Prod. by [Nom du Beatmaker] »",
       ],
     },
     {
       type: "EXCLUSIVE",
-      label: "Exclusive",
-      price: exclusive,
+      label: "Exclusif",
+      price: exclusiveAvail ? exclusive : null,
       icon: <Crown className="w-5 h-5" />,
       color: "from-violet-500/20 to-purple-600/5 border-violet-400/30",
       accent: "text-violet-300",
       accentBg: "bg-violet-500 hover:bg-violet-400 text-white",
-      tag: "Tout inclus",
+      tag: exclusiveAvail ? "Tout inclus" : undefined,
       perks: [
-        "WAV + MP3 + Stems",
-        "Distribution & streams illimités",
-        "Droits d'auteur transférés",
-        "Beat retiré du catalogue",
-        "Exclusivité totale",
+        "Fichiers : WAV + MP3 + Trackout",
+        "Streams & Ventes : Illimités",
+        "Usage : Commercial Illimité (Radio, TV, Cinéma, Pub)",
+        "Exclusivité : Le beat est retiré de la vente immédiatement",
+        "Droits : Contrat de cession de droits",
       ],
     },
   ];
@@ -96,8 +104,30 @@ export function LicensePickerModal({
   isPlaying?: boolean;
   onTogglePlay?: (id: string) => void;
 }) {
+  const router = useRouter();
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [cartError, setCartError] = useState<string | null>(null);
   const [submittingLicense, setSubmittingLicense] = useState<LicenseType | null>(null);
+
+
+  const handleAdd = async (beatId: string, licType: LicenseType) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      onClose();
+      router.push("/login?redirect=/catalogue");
+      return;
+    }
+    setCartError(null);
+    setSubmittingLicense(licType);
+    try {
+      const ok = await onAdd(beatId, licType);
+      setSubmittingLicense(null);
+      if (ok) onClose();
+    } catch (err: any) {
+      setSubmittingLicense(null);
+      setCartError(err?.message || "Une erreur est survenue.");
+    }
+  };
 
   useEffect(() => {
     if (!beat) return;
@@ -168,14 +198,12 @@ export function LicensePickerModal({
               return (
                 <div
                   key={lic.type}
-                  className={`relative rounded-2xl bg-gradient-to-b ${lic.color} border p-4 flex flex-col gap-3 transition-transform duration-200 ${
-                    unavailable ? "opacity-40 cursor-not-allowed" : "hover:scale-[1.02]"
-                  }`}
+                  className={`relative rounded-2xl bg-gradient-to-b ${lic.color} border p-4 flex flex-col gap-3 transition-transform duration-200 ${unavailable ? "opacity-40 cursor-not-allowed" : "hover:scale-[1.02]"
+                    }`}
                 >
                   {lic.tag && !unavailable && (
-                    <span className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full whitespace-nowrap ${
-                      lic.type === "PREMIUM" ? "bg-brand-gold text-slate-900" : "bg-violet-500 text-white"
-                    }`}>
+                    <span className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full whitespace-nowrap ${lic.type === "PREMIUM" ? "bg-brand-gold text-slate-900" : "bg-violet-500 text-white"
+                      }`}>
                       {lic.tag}
                     </span>
                   )}
@@ -202,16 +230,12 @@ export function LicensePickerModal({
 
                   <button
                     disabled={unavailable || submittingLicense !== null}
-                    onClick={async () => {
+                    onClick={() => {
                       if (unavailable || submittingLicense) return;
-                      setSubmittingLicense(lic.type);
-                      const ok = await onAdd(beat.id, lic.type);
-                      setSubmittingLicense(null);
-                      if (ok) onClose();
+                      handleAdd(beat.id, lic.type);
                     }}
-                    className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-                      unavailable || submittingLicense !== null ? "bg-white/5 text-slate-600 cursor-not-allowed" : lic.accentBg
-                    }`}
+                    className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${unavailable || submittingLicense !== null ? "bg-white/5 text-slate-600 cursor-not-allowed" : lic.accentBg
+                      }`}
                   >
                     <ShoppingCart className="w-4 h-4" />
                     {unavailable ? "Indisponible" : submittingLicense === lic.type ? "Ajout..." : "Ajouter"}
@@ -220,6 +244,23 @@ export function LicensePickerModal({
               );
             })}
           </div>
+
+          {cartError && (
+            <div className="px-5 pb-2">
+              <div className="text-sm text-red-400 text-center bg-red-500/10 border border-red-500/20 rounded-xl py-2.5 px-4 flex flex-col gap-2 items-center">
+                <span className="flex items-center gap-2">⚠️ {cartError}</span>
+                {cartError.toLowerCase().includes("déjà dans le panier") && (
+                  <button
+                    onClick={() => { onClose(); router.push('/cart'); }}
+                    className="text-xs font-bold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 mt-1"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    Voir mon panier
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="px-5 pb-5 pt-0 text-center">
             <p className="text-[11px] text-slate-600">

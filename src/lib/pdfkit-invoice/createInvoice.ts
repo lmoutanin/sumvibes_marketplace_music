@@ -6,73 +6,73 @@ const PDFDocument = (PDFDocumentLib as any).default || PDFDocumentLib;
 
 // ─── INFO VENDEUR ─────────────────────────────────────────────────────────────────
 const SELLER = {
-  name:    "BE GREAT",
-  siret : "93238647700016",
-  tva_number: "FR28932386477",  
-  status:"SAS",
+  name: "BE GREAT",
+  siret: "93238647700016",
+  tva_number: "FR28932386477",
+  status: "SAS",
   address: "37 RUE DE GRIERE 74270 MARLIOZ",
-  city:    "97100 Guadeloupe",
+  city: "97100 Guadeloupe",
   country: "France",
 }
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface InvoiceItem {
-  item:        string;
+  item: string;
   description: string;
-  amount:      number;
-  quantity:    number;
+  amount: number;
+  quantity: number;
 }
 
 export interface InvoicePayment {
   invoice_nr: string;
-  subtotal:   number;
-  tax:        number;
-  total:      number;
-  method?:    string;
+  subtotal: number;
+  tax: number;
+  total: number;
+  method?: string;
 }
 
 export interface InvoiceShipping {
-  name:    string;
+  name: string;
   address: string;
-  city:    string;
+  city: string;
   country: string;
 }
 
 export interface Invoice {
-  payment:  InvoicePayment;
+  payment: InvoicePayment;
   shipping: InvoiceShipping;
-  items:    InvoiceItem[];
+  items: InvoiceItem[];
 }
 
 // ─── Mise en page ─────────────────────────────────────────────────────────────
-const PAGE_W  = 595.28;
-const PAGE_H  = 841.89;
-const ML      = 48;
-const MR      = 48;
+const PAGE_W = 595.28;
+const PAGE_H = 841.89;
+const ML = 48;
+const MR = 48;
 const CONTENT = PAGE_W - ML - MR;
 
 // ─── Couleurs ─────────────────────────────────────────────────────────────────
 const C = {
-  ink:       "#0D0D0D",
-  smoke:     "#3A3A3A",
-  mist:      "#8A8A8A",
-  cloud:     "#C8C8C8",
-  fog:       "#F0F0F0",
-  white:     "#FFFFFF",
-  headerBg:  "#0D0D0D",
-  totalBg:   "#0D0D0D",
-  footerBg:  "#F7F7F7",
+  ink: "#0D0D0D",
+  smoke: "#3A3A3A",
+  mist: "#8A8A8A",
+  cloud: "#C8C8C8",
+  fog: "#F0F0F0",
+  white: "#FFFFFF",
+  headerBg: "#0D0D0D",
+  totalBg: "#0D0D0D",
+  footerBg: "#F7F7F7",
 } as const;
 
 // ─── Colonnes tableau ─────────────────────────────────────────────────────────
 // CONTENT = 499.28  →  desc=175  lic=110  prix=72  qty=32  total=82  (+ marge droite visuelle)
 const T = {
-  desc:  { x: ML,        w: 175 },
-  lic:   { x: ML + 180,  w: 110 },
-  prix:  { x: ML + 295,  w:  72 },
-  qty:   { x: ML + 372,  w:  32 },
-  total: { x: ML + 409,  w:  82 },   // fin = 48+409+82 = 539 (8pt de marge à droite)
+  desc: { x: ML, w: 175 },
+  lic: { x: ML + 180, w: 110 },
+  prix: { x: ML + 295, w: 72 },
+  qty: { x: ML + 372, w: 32 },
+  total: { x: ML + 409, w: 82 },   // fin = 48+409+82 = 539 (8pt de marge à droite)
 } as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -91,12 +91,12 @@ function toLicenseTier(value: string): LicenseTier | null {
 function termsForTier(tier: LicenseTier): string {
   switch (tier) {
     case "EXCLUSIVE":
-      return "EXCLUSIVE : Usage Commercial | Territoire France | Durée Illimitée";
+      return "EXCLUSIVE : Usage Commercial Illimité | Droits Cédés | Trackout inclus";
     case "PREMIUM":
-      return "PREMIUM : Usage Commercial | Territoire France | Durée 5 ans";
+      return "PREMIUM (NON-EXCLUSIVE) : Usage Commercial Étendu | 250 000 Streams | Durée Illimitée";
     case "BASIC":
     default:
-      return "BASIC : Usage Privé | Territoire France | Durée 1 an";
+      return "BASIC : Usage Commercial Limité | 5 000 Streams | Durée Illimitée";
   }
 }
 
@@ -133,17 +133,17 @@ function hr(
 // ─────────────────────────────────────────────────────────────────────────────
 export function createInvoiceBuffer(invoice: Invoice): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc    = new PDFDocument({ size: "A4", margin: 0, autoFirstPage: true, compress: true });
+    const doc = new PDFDocument({ size: "A4", margin: 0, autoFirstPage: true, compress: true });
     const chunks: Buffer[] = [];
 
-    doc.on("data",  (c: Buffer) => chunks.push(c));
-    doc.on("end",   ()          => resolve(Buffer.concat(chunks)));
+    doc.on("data", (c: Buffer) => chunks.push(c));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
     let y = drawHeader(doc, invoice);
-    y     = drawBillingSection(doc, invoice, y);
-    y     = drawTable(doc, invoice, y);
-    y     = drawTotals(doc, invoice, y);
+    y = drawBillingSection(doc, invoice, y);
+    y = drawTable(doc, invoice, y);
+    y = drawTotals(doc, invoice, y);
     drawFooter(doc, invoice);
 
     doc.end();
@@ -235,13 +235,13 @@ function drawHeader(doc: PDFKit.PDFDocument, invoice: Invoice): number {
 
 // ─── 2. ADRESSES + MÉTA ───────────────────────────────────────────────────────
 function drawBillingSection(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): number {
-  const TOP      = startY + 26;
-  const colLeft  = ML;
+  const TOP = startY + 26;
+  const colLeft = ML;
   const colRight = PAGE_W / 2 + 10;
 
   // Labels (en majuscules, petite taille — sans characterSpacing)
   doc.fillColor(C.mist).font("Helvetica").fontSize(7);
-  doc.text("DE",         colLeft,  TOP, { lineBreak: false });
+  doc.text("DE", colLeft, TOP, { lineBreak: false });
   doc.text("FACTURER A", colRight, TOP, { lineBreak: false });
 
   // Vendeur
@@ -267,8 +267,8 @@ function drawBillingSection(doc: PDFKit.PDFDocument, invoice: Invoice, startY: n
   const metaW = CONTENT / 3;
   const metas = [
     { label: "DATE D'EMISSION", value: new Date().toLocaleDateString("fr-FR") },
-    { label: "STATUT",          value: "Paiement immédiat" },
-    { label: "METHODE",         value: invoice.payment.method || "Non spécifiée" },
+    { label: "STATUT", value: "Paiement immédiat" },
+    { label: "METHODE", value: invoice.payment.method || "Non spécifiée" },
   ];
 
   metas.forEach((m, i) => {
@@ -288,22 +288,22 @@ function drawBillingSection(doc: PDFKit.PDFDocument, invoice: Invoice, startY: n
 // ─── 3. TABLEAU ───────────────────────────────────────────────────────────────
 function drawTable(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): number {
   const HEADER_H = 26;
-  const ROW_H    = 33;
+  const ROW_H = 33;
 
   // En-tête fond noir
   doc.rect(ML, startY, CONTENT, HEADER_H).fill(C.ink);
 
   const hY = startY + 9;
   doc.fillColor(C.white).font("Helvetica-Bold").fontSize(7.5);
-  doc.text("DESCRIPTION", T.desc.x + 5,  hY, { width: T.desc.w,  lineBreak: false });
-  doc.text("LICENCE",     T.lic.x,        hY, { width: T.lic.w,   lineBreak: false });
-  doc.text("PRIX U.",     T.prix.x,       hY, { width: T.prix.w,  align: "right", lineBreak: false });
-  doc.text("QTE",         T.qty.x,        hY, { width: T.qty.w,   align: "right", lineBreak: false });
-  doc.text("TOTAL",       T.total.x,      hY, { width: T.total.w, align: "right", lineBreak: false });
+  doc.text("DESCRIPTION", T.desc.x + 5, hY, { width: T.desc.w, lineBreak: false });
+  doc.text("LICENCE", T.lic.x, hY, { width: T.lic.w, lineBreak: false });
+  doc.text("PRIX U.", T.prix.x, hY, { width: T.prix.w, align: "right", lineBreak: false });
+  doc.text("QTE", T.qty.x, hY, { width: T.qty.w, align: "right", lineBreak: false });
+  doc.text("TOTAL", T.total.x, hY, { width: T.total.w, align: "right", lineBreak: false });
 
   // Lignes
   invoice.items.forEach((item, i) => {
-    const rowY  = startY + HEADER_H + i * ROW_H;
+    const rowY = startY + HEADER_H + i * ROW_H;
     const textY = rowY + Math.floor(ROW_H / 2) - 5;
 
     // Fond alterné
@@ -386,8 +386,8 @@ function drawTotals(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): 
   // Bloc TOTAL — commence à LX, finit exactement à PAGE_W - MR
   const totalY = TOP + 44;
   const totalH = 32;
-  const rectX  = LX - 8;
-  const rectW  = (PAGE_W - MR) - rectX;
+  const rectX = LX - 8;
+  const rectW = (PAGE_W - MR) - rectX;
   doc.rect(rectX, totalY, rectW, totalH).fill(C.totalBg);
 
   doc.fillColor(C.white).font("Helvetica-Bold").fontSize(10.5)
@@ -404,7 +404,7 @@ function drawTotals(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): 
 // ─── 5. FOOTER ────────────────────────────────────────────────────────────────
 function drawFooter(doc: PDFKit.PDFDocument, invoice: Invoice): void {
   const FOOTER_H = 72;
-  const footerY  = PAGE_H - FOOTER_H;
+  const footerY = PAGE_H - FOOTER_H;
   const rightsText = buildRightsAssignment(invoice.items);
 
   doc.rect(0, footerY, PAGE_W, FOOTER_H).fill(C.footerBg);

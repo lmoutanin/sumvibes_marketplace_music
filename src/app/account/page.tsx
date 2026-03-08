@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
-import { ShoppingBag, Download, Heart, Settings, Music, TrendingUp, Clock, ArrowRight, CreditCard, Star, Crown, Zap } from "lucide-react";
+import { ShoppingBag, Download, Heart, Settings, Music, TrendingUp, Clock, ArrowRight, CreditCard, Star, Crown, Zap, Loader2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
 interface Purchase {
@@ -122,6 +122,7 @@ export default function AccountPage() {
   }
   const plan = user.subscription?.plan?.replace("_MONTHLY", "").replace("_YEARLY", "") || "FREEMIUM";
   const isPremium = plan === "PREMIUM";
+  const isStandard = plan === "STANDARD";
 
   let subIcon = <Music className="w-5 h-5 text-white" />;
   let subColor = "from-slate-600 to-slate-800";
@@ -135,6 +136,12 @@ export default function AccountPage() {
     textColor = "text-brand-gold";
     ringColor = "shadow-[0_0_15px_rgba(212,175,55,0.4)]";
     borderColor = "border-brand-gold/30";
+  } else if (isStandard) {
+    subIcon = <Zap className="w-5 h-5 text-slate-900" />;
+    subColor = "from-blue-400 to-indigo-500";
+    textColor = "text-blue-400";
+    ringColor = "shadow-[0_0_15px_rgba(96,165,250,0.4)]";
+    borderColor = "border-blue-500/30";
   }
 
   const expirationDate = user.subscription?.currentPeriodEnd
@@ -150,14 +157,16 @@ export default function AccountPage() {
           {/* Profile Header */}
           <div className="glass rounded-3xl p-8 mb-8">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <Avatar src={user.avatar} name={user.displayName || user.username} size={96} />
+              <Avatar src={user.avatar} name={user.username} size={96} />
               <div className="flex-1 text-center md:text-left">
                 <h1 className="text-3xl font-bold font-display">{user.displayName || user.username}</h1>
                 <p className="text-slate-400">{user.email}</p>
                 <div className="flex flex-col md:flex-row items-center gap-3 mt-4 justify-center md:justify-start">
+                  <span className="glass px-3 py-1 rounded-full text-xs text-brand-gold font-bold">
+                    Membre
+                  </span>
                   {user.createdAt && (
-                    <span className="text-xs text-slate-400 flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 shadow-inner">
-                      <Clock className="w-3.5 h-3.5" />
+                    <span className="text-xs text-slate-400">
                       Membre depuis {new Date(user.createdAt).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
                     </span>
                   )}
@@ -169,148 +178,176 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {statsDisplay.map((s) => (
-              <div key={s.label} className="glass rounded-2xl p-6 text-center">
-                <s.icon className={`w-8 h-8 mx-auto mb-3 ${s.color}`} />
-                <div className="text-2xl font-bold text-gradient">{s.value}</div>
-                <div className="text-sm text-slate-400">{s.label}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Recent Purchases */}
-            <div className="lg:col-span-2">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold font-display flex items-center gap-2">
-                  <ShoppingBag className="w-6 h-6 text-brand-gold" /> Achats récents
-                </h2>
-                <Link href="/account/downloads" className="text-brand-gold text-sm font-semibold flex items-center gap-1 hover:underline">
-                  Tout voir <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {loading ? (
-                  [...Array(3)].map((_, i) => (
-                    <div key={i} className="glass rounded-xl p-4 animate-pulse">
-                      <div className="h-12 bg-white/5 rounded"></div>
-                    </div>
-                  ))
-                ) : purchases.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>Aucun achat pour le moment</p>
-                    <Link href="/catalogue" className="text-brand-gold text-sm hover:underline mt-2 inline-block">
-                      Découvrir le catalogue
-                    </Link>
-                  </div>
-                ) : (
-                  purchases.map((purchase) => (
-                    <div key={purchase.id} className="glass rounded-xl p-4 flex items-center gap-4 hover:bg-white/5">
-                      <div className="w-12 h-12 rounded-xl bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
-                        <Music className="w-6 h-6 text-brand-gold" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-sm">{purchase.beat.title}</h4>
-                        <p className="text-xs text-slate-400">
-                          <Link href={`/producers/${purchase.beat.seller?.id}`} className="hover:text-brand-gold transition-colors">{purchase.beat.seller?.displayName || purchase.beat.seller?.username}</Link> · {Array.isArray(purchase.beat.genre) ? purchase.beat.genre[0] : purchase.beat.genre}
-                        </p>
-                      </div>
-                      <div className="hidden md:block text-right">
-                        <div className="text-xs font-bold px-2 py-0.5 rounded-full inline-block bg-brand-gold/20 text-brand-gold">
-                          {purchase.license.type.charAt(0) + purchase.license.type.slice(1).toLowerCase()}
-                        </div>
-                        <div className="text-xs text-slate-400 mt-1 flex items-center gap-1 justify-end">
-                          <Clock className="w-3 h-3" /> {new Date(purchase.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </div>
-                      </div>
-                      <div className="text-brand-gold font-bold text-sm">{Number(purchase.amount).toFixed(2)}€</div>
-                      <a href={`/api/purchases/${purchase.id}/download?token=${token}`} className="btn-primary px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1">
-                        <Download className="w-4 h-4" />
-                      </a>
-                    </div>
-                  ))
-                )}
-              </div>
+          {loading ? (
+            <div className="text-center py-20">
+              <Loader2 className="w-12 h-12 text-brand-gold animate-spin mx-auto mb-4" />
+              <p className="text-slate-400">Chargement des données...</p>
             </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Quick Actions */}
-              <div className="glass rounded-2xl p-6">
-                <h3 className="font-bold font-display text-lg mb-4">Actions rapides</h3>
-                <div className="space-y-3">
-                  <Link href="/account/subscriptions" className={`flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 border ${borderColor} transition-colors group`}>
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${subColor} flex items-center justify-center relative ${ringColor} group-hover:scale-105 transition-transform shrink-0`}>
-                      {subIcon}
-                    </div>
-                    <div>
-                      <span className={`block text-sm font-bold ${textColor}`}>Abonnement Pro</span>
-                      <span className={`block text-xs ${textColor}/70 mt-0.5`}>
-                        Gérer votre formule ({plan})
-                        {expirationDate && ` • Expire le ${expirationDate}`}
-                      </span>
-                    </div>
-                    <ArrowRight className={`w-4 h-4 ml-auto ${textColor}`} />
-                  </Link>
-
-                  <Link href="/account/downloads" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors">
-                    <Download className="w-5 h-5 text-green-400" />
-                    <span className="text-sm">Mes téléchargements</span>
-                    <ArrowRight className="w-4 h-4 ml-auto text-slate-400" />
-                  </Link>
-                  
-                  <Link href="/catalogue" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors">
-                    <TrendingUp className="w-5 h-5 text-brand-gold" />
-                    <span className="text-sm">Explorer le catalogue</span>
-                    <ArrowRight className="w-4 h-4 ml-auto text-slate-400" />
-                  </Link>
-                </div>
+          ) : (
+            <>
+              {/* Stats KPI */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {statsDisplay.map((s) => (
+                  <div key={s.label} className="glass rounded-2xl p-6">
+                    <s.icon className={`w-8 h-8 mb-3 ${s.color}`} />
+                    <div className="text-2xl font-bold text-gradient">{s.value}</div>
+                    <div className="text-sm text-slate-400">{s.label}</div>
+                  </div>
+                ))}
               </div>
 
-              {/* Favorites */}
-              <div className="glass rounded-2xl p-6">
-                <h3 className="font-bold font-display text-lg mb-4 flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-red-400" /> Favoris
-                </h3>
-                <div className="space-y-3">
-                  {loading ? (
-                    [...Array(3)].map((_, i) => (
-                      <div key={i} className="flex items-center gap-3 animate-pulse">
-                        <div className="w-10 h-10 rounded-lg bg-white/5"></div>
-                        <div className="flex-1">
-                          <div className="h-4 bg-white/5 rounded mb-2"></div>
-                          <div className="h-3 bg-white/5 rounded w-2/3"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Favorites */}
+                <div className="lg:col-span-2 glass rounded-3xl p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold font-display flex items-center gap-2">
+                      <Heart className="w-6 h-6 text-brand-gold" /> Vos Favoris
+                    </h2>
+                  </div>
+                  {favorites.length > 0 ? (
+                    <div className="space-y-4">
+                      {favorites.map((fav) => (
+                        <div key={fav.id} className="flex items-center gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0" onClick={() => window.location.href = `/catalogue?search=${fav.beat.title}`}>
+                          <div className="w-12 h-12 rounded-xl bg-brand-gold/10 flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-brand-gold/20 transition-colors">
+                            <Music className="w-6 h-6 text-brand-gold" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm cursor-pointer hover:text-brand-gold transition-colors">{fav.beat.title}</h4>
+                            <div className="text-xs text-slate-400 mt-1">
+                              <Link href={`/producers/${fav.beat.seller.id}`} className="hover:text-brand-gold transition-colors">{fav.beat.seller.displayName || fav.beat.seller.username}</Link>{fav.beat.bpm ? ` · ${fav.beat.bpm} BPM` : ""}
+                            </div>
+                          </div>
+                          <Star className="w-5 h-5 text-brand-gold fill-brand-gold" />
                         </div>
-                      </div>
-                    ))
-                  ) : favorites.length === 0 ? (
-                    <div className="text-center py-4 text-slate-400 text-sm">
-                      <Heart className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                      Aucun favori
+                      ))}
                     </div>
                   ) : (
-                    favorites.map((fav) => (
-                      <div key={fav.id} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
-                          <Music className="w-5 h-5 text-brand-gold" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm truncate">{fav.beat.title}</div>
-                          <div className="text-xs text-slate-400">
-                            <Link href={`/producers/${fav.beat.seller.id}`} className="hover:text-brand-gold transition-colors">{fav.beat.seller.displayName || fav.beat.seller.username}</Link>{fav.beat.bpm ? ` · ${fav.beat.bpm} BPM` : ""}
-                          </div>
-                        </div>
-                        <Star className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                      </div>
-                    ))
+                    <div className="text-center py-12 text-slate-500">
+                      <Heart className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p>Vous n'avez pas encore de favoris</p>
+                      <Link href="/catalogue" className="text-brand-gold text-sm mt-2 inline-block hover:underline">
+                        Découvrir de nouveaux beats →
+                      </Link>
+                    </div>
                   )}
                 </div>
+
+                {/* Quick Nav + Balance */}
+                <div className="glass rounded-3xl p-8">
+                  <h2 className="text-xl font-bold font-display mb-6">Navigation rapide</h2>
+                  <div className="space-y-3">
+                    <Link href="/account/subscriptions" className={`flex items-center gap-3 glass rounded-xl p-4 hover:bg-white/5 border ${borderColor} group`}>
+                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${subColor} flex items-center justify-center relative ${ringColor} group-hover:scale-105 transition-transform shrink-0`}>
+                        {subIcon}
+                      </div>
+                      <div className="flex-1 ml-2">
+                        <div className={`font-bold text-sm ${textColor}`}>Abonnement Pro</div>
+                        <div className={`text-xs ${textColor}/70 mt-0.5`}>
+                          Gérer votre formule ({plan})
+                          {expirationDate && ` • Expire le ${expirationDate}`}
+                        </div>
+                      </div>
+                      <ArrowRight className={`w-4 h-4 ${textColor}`} />
+                    </Link>
+
+                    <Link href="/account/downloads" className="flex items-center gap-3 glass rounded-xl p-4 hover:bg-white/5 border border-transparent transition-colors">
+                      <Download className="w-5 h-5 text-green-400" />
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm">Téléchargements</div>
+                        <div className="text-xs text-slate-400">Fichiers disponibles</div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-400" />
+                    </Link>
+
+                    <Link href="/catalogue" className="flex items-center gap-3 glass rounded-xl p-4 hover:bg-white/5 border border-transparent transition-colors">
+                      <TrendingUp className="w-5 h-5 text-brand-gold" />
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm">Catalogue</div>
+                        <div className="text-xs text-slate-400">Découvrir de nouveaux beats</div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-400" />
+                    </Link>
+                  </div>
+
+                  {/* Balance / Dépensé */}
+                  <Link href="/account/expenses" className="block glass rounded-xl p-4 mt-6 border border-brand-gold/20 hover:border-brand-gold/50 hover:bg-white/5 transition-all group">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="text-sm text-slate-400">Montant total investi</div>
+                        <div className="text-3xl font-bold text-gradient mt-1">{Number(stats.totalSpent).toFixed(2)} €</div>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-brand-gold opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                    </div>
+                    <div className="flex items-center gap-1 mt-2 text-sm text-brand-gold">
+                      <Star className="w-4 h-4" /> Voir tout l'historique
+                    </div>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </div>
+
+              {/* Recent Purchases */}
+              <div className="glass rounded-3xl p-8 mt-8">
+                <h2 className="text-xl font-bold font-display mb-6 flex items-center gap-2">
+                  <ShoppingBag className="w-6 h-6 text-brand-gold" /> Achats récents
+                </h2>
+                {purchases.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-left text-sm text-slate-400 border-b border-white/10">
+                          <th className="pb-3 font-semibold">Beat</th>
+                          <th className="pb-3 font-semibold">Beatmaker</th>
+                          <th className="pb-3 font-semibold">Licence</th>
+                          <th className="pb-3 font-semibold">Prix</th>
+                          <th className="pb-3 font-semibold">Date</th>
+                          <th className="pb-3 font-semibold"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {purchases.map((purchase) => (
+                          <tr key={purchase.id} className="border-b border-white/5 text-sm hover:bg-white/[0.02] transition-colors">
+                            <td className="py-4 font-semibold">
+                              {purchase.beat.title}
+                            </td>
+                            <td className="py-4 text-slate-400">
+                              <Link href={`/producers/${purchase.beat.seller?.id}`} className="hover:text-brand-gold transition-colors">
+                                {purchase.beat.seller?.displayName || purchase.beat.seller?.username}
+                              </Link>
+                            </td>
+                            <td className="py-4">
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${purchase.license.name.toLowerCase().includes("exclusive") ? "bg-purple-500/20 text-purple-400" :
+                                purchase.license.name.toLowerCase().includes("premium") ? "bg-brand-gold/20 text-brand-gold" :
+                                  "bg-white/10 text-white"
+                                }`}>
+                                {purchase.license.name}
+                              </span>
+                            </td>
+                            <td className="py-4 text-brand-gold font-bold">{Number(purchase.amount).toFixed(2)} €</td>
+                            <td className="py-4 text-slate-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {new Date(purchase.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </td>
+                            <td className="py-4 text-right">
+                              <a href={`/api/purchases/${purchase.id}/download?token=${token}`} className="btn-primary px-3 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1">
+                                <Download className="w-4 h-4" /> DL
+                              </a>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500">
+                    <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>Pas encore d'achats sur cette période</p>
+                    <Link href="/catalogue" className="text-brand-gold text-sm mt-2 inline-block hover:underline">
+                      Explorez notre catalogue →
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </main>
 

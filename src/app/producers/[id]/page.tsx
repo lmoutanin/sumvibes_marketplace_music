@@ -122,7 +122,8 @@ export default function ProducerProfilePage({
         setLoading(true);
         const [producerRes, beatsRes, servicesRes] = await Promise.all([
           fetch(`/api/producers/${id}`),
-          fetch(`/api/beats?sellerId=${id}&limit=100`),
+          fetch(`/api/beats?sellerId=${id}&limit=100&status=PUBLISHED`),
+
           fetch(`/api/services?sellerId=${id}&limit=10`),
         ]);
         if (producerRes.ok) {
@@ -158,7 +159,7 @@ export default function ProducerProfilePage({
       .then((d) => {
         if (d.favorites) setLikedIds(new Set(d.favorites.map((f: any) => f.beatId)));
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   const toggleLike = async (beatId: string) => {
@@ -527,11 +528,10 @@ export default function ProducerProfilePage({
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <button
                             onClick={() => toggleLike(beat.id)}
-                            className={`p-2.5 rounded-xl border transition-colors ${
-                              isLiked
-                                ? "bg-rose-500/15 border-rose-500/40 text-rose-400"
-                                : "bg-white/5 border-white/10 text-slate-400 hover:border-rose-500/30 hover:text-rose-400"
-                            }`}
+                            className={`p-2.5 rounded-xl border transition-colors ${isLiked
+                              ? "bg-rose-500/15 border-rose-500/40 text-rose-400"
+                              : "bg-white/5 border-white/10 text-slate-400 hover:border-rose-500/30 hover:text-rose-400"
+                              }`}
                             title={isLiked ? "Retirer des favoris" : "Ajouter aux favoris"}
                           >
                             <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
@@ -578,11 +578,10 @@ export default function ProducerProfilePage({
                         <button
                           key={p}
                           onClick={() => setCurrentPage(p)}
-                          className={`w-9 h-9 rounded-xl text-sm font-bold transition-colors ${
-                            isCurrent
-                              ? "bg-brand-gold text-slate-900"
-                              : "glass hover:bg-white/10 text-slate-300"
-                          }`}
+                          className={`w-9 h-9 rounded-xl text-sm font-bold transition-colors ${isCurrent
+                            ? "bg-brand-gold text-slate-900"
+                            : "glass hover:bg-white/10 text-slate-300"
+                            }`}
                         >
                           {p}
                         </button>
@@ -629,11 +628,6 @@ export default function ProducerProfilePage({
                       <div className="pt-4 border-t border-white/10 flex items-center justify-between relative z-10 mt-auto">
                         <div className="text-brand-gold font-bold text-lg">À partir de {s.price}€</div>
                         <div className="flex gap-2">
-                          <Link href={`/community/services/${s.id}`}
-                            className="w-9 h-9 rounded-xl glass bg-white/5 hover:bg-brand-gold/20 border border-white/10 hover:border-brand-gold/30 flex items-center justify-center transition-colors text-slate-300 hover:text-brand-gold"
-                            title="Voir le service">
-                            <ArrowRight className="w-4 h-4" />
-                          </Link>
                           {user?.id !== id && (
                             <Link href={`/community/messages?new=${id}`}
                               className="w-9 h-9 rounded-xl glass bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-gold/30 flex items-center justify-center transition-colors text-white hover:text-brand-gold"

@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Calcul des frais Freemium (10%) pour les BUYER non-Premium
+    // Calcul des frais selon l'abonnement du BUYER
     let platformFee = 0;
 
     const user = await prisma.user.findUnique({
@@ -76,12 +76,12 @@ export async function POST(req: NextRequest) {
     });
 
     if (user && user.role === "BUYER") {
-      const isPremium = user.subscription?.status === "ACTIVE" &&
-        (user.subscription?.plan === "PREMIUM_MONTHLY" || user.subscription?.plan === "PREMIUM_YEARLY");
+      const plan = user.subscription?.plan || "FREEMIUM";
+      const isPremium = plan === "PREMIUM_MONTHLY" || plan === "PREMIUM_YEARLY";
+      const isStandard = plan === "STANDARD_MONTHLY" || plan === "STANDARD_YEARLY";
 
-      if (!isPremium) {
-        platformFee = totalAmount * 0.10; // 10% de frais pour Freemium
-      }
+      const feeRate = isPremium ? 0 : isStandard ? 0.05 : 0.10;
+      platformFee = totalAmount * feeRate;
     }
 
     const finalAmount = totalAmount + platformFee;

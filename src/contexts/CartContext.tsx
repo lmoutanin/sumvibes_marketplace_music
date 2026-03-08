@@ -1,7 +1,4 @@
-
 "use client";
-
-import { compare } from 'bcryptjs';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface CartItem {
@@ -103,10 +100,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         await fetchCart();
         return true;
       }
-      return false;
+
+      // Récupère et relance l'erreur API pour que la modal puisse l'afficher
+      const data = await res.json().catch(() => ({}));
+      const errorMessage = data.error || `Erreur ${res.status}`;
+
+      // Ne pas logger en rouge si c'est une erreur 400 ou 404 (ex: déjà dans le panier, beat non disponible)
+      // Car ces erreurs sont gérées et affichées via la modal.
+      if (res.status !== 400 && res.status !== 404) {
+        console.error('Error adding to cart:', errorMessage);
+      }
+
+      throw new Error(errorMessage);
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      return false;
+      throw error; // on relance pour que la modal puisse afficher le message
     }
   };
 

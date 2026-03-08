@@ -78,16 +78,21 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
     const sellerId = searchParams.get("sellerId");
     const featured = searchParams.get("featured");
+    const statusParam = searchParams.get("status");
     const includeDeleted = searchParams.get("includeDeleted") === "true";
 
     const where: Prisma.BeatWhereInput = {};
 
-    if (!sellerId) {
+    if (statusParam && ["PUBLISHED", "DRAFT", "PENDING_REVIEW", "REJECTED"].includes(statusParam)) {
+      // Statut explicitement demandé (ex: status=PUBLISHED depuis la page producer)
+      where.status = statusParam as BeatStatus;
+    } else if (!sellerId) {
       where.status = "PUBLISHED";
     } else if (!includeDeleted) {
       // Si on récupère les beats d'un user, on exclut les supprimés sauf si includeDeleted=true
       where.status = { not: "DELETED" };
     }
+
 
     if (genre?.length) where.genre = { hasSome: genre };
     if (mood?.length) where.mood = { hasSome: mood };

@@ -26,11 +26,14 @@ export default function CartPage() {
 
   const subtotal = cart.total;
 
-  // Checking Premium status
-  const isPremium = user?.subscription?.plan === "PREMIUM_MONTHLY" || user?.subscription?.plan === "PREMIUM_YEARLY";
+  // Get current plan status
+  const plan = user?.subscription?.plan || "FREEMIUM";
+  const isPremium = plan === "PREMIUM_MONTHLY" || plan === "PREMIUM_YEARLY";
+  const isStandard = plan === "STANDARD_MONTHLY" || plan === "STANDARD_YEARLY";
 
   // Calculate platform fee
-  const platformFee = isPremium ? 0 : subtotal * 0.10;
+  const feeRate = isPremium ? 0 : isStandard ? 0.05 : 0.10;
+  const platformFee = subtotal * feeRate;
 
   // Calculate tax (20% on subtotal + platform fee)
   const tax = ((subtotal + platformFee) * 0.2).toFixed(2);
@@ -133,8 +136,8 @@ export default function CartPage() {
                       <span>{subtotal.toFixed(2)} €</span>
                     </div>
                     <div className="flex justify-between text-slate-300">
-                      <span>Frais de service (10%)</span>
-                      {isPremium ? (
+                      <span>Frais de service ({feeRate * 100}%)</span>
+                      {feeRate === 0 ? (
                         <span className="text-brand-gold font-bold">0.00 €</span>
                       ) : (
                         <span>{platformFee.toFixed(2)} €</span>

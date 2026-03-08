@@ -30,7 +30,7 @@ export default function CgvPage() {
 
             <div>
               <h2 className="text-xl font-bold text-white mb-3">Article 2 — Produits et Services</h2>
-              <p>SUMVIBES propose la vente de licences d&apos;utilisation de productions musicales (beats, compositions, toplines). Chaque produit est accompagné d&apos;une licence définissant les droits d&apos;utilisation accordés à l&apos;acheteur. Trois types de licences sont disponibles : Basic, Premium et Exclusive.</p>
+              <p>SUMVIBES propose la vente de licences d&apos;utilisation de productions musicales (beats, compositions, toplines). Chaque produit est accompagné d&apos;une licence définissant les droits d&apos;utilisation accordés à l&apos;acheteur. Trois types de licences sont disponibles : Basic, Premium (Non-Exclusive) et Exclusive.</p>
             </div>
 
             <div>

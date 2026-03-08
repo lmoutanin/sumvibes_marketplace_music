@@ -16,8 +16,116 @@ async function saveUploadedFile(file: File, subfolder = "covers"): Promise<strin
   return filename;
 }
 
+// POST /api/beats/[id] — Increment play count (no auth required)
+export async function POST(request: NextRequest, context: any) {
+  try {
+    let ctx = context;
+    if (typeof ctx?.then === "function") ctx = await ctx;
+    let params = ctx?.params;
+    if (typeof params?.then === "function") params = await params;
+    const id = params?.id as string;
+    if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });
+
+    // Accept slug or id
+    const beat = await prisma.beat.findFirst({ where: { OR: [{ slug: id }, { id }] } });
+    if (!beat) return NextResponse.json({ error: "Beat introuvable" }, { status: 404 });
+
+    await prisma.beat.update({
+      where: { id: beat.id },
+      data: { plays: { increment: 1 } },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("POST /api/beats/[id] (plays) error:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+
+export async function GET(request: NextRequest, context: any) {
+  try {
+    let ctx = context;
+    if (typeof ctx?.then === "function") ctx = await ctx;
+    let params = ctx?.params;
+    if (typeof params?.then === "function") params = await params;
+    const id = params?.id as string;
+    if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });
+
+    const token = request.headers.get("authorization")?.split(" ")[1];
+    const decoded = token ? verifyToken(token) : null;
+
+    // Search by slug first, then by id (product page uses slug as [id])
+    const beat = await prisma.beat.findFirst({
+      where: {
+        OR: [{ slug: id }, { id }],
+        status: { not: "DELETED" }, // Allow ARCHIVED for purchased exclusive beats
+      },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatar: true,
+            sellerProfile: {
+              select: {
+                artistName: true,
+                verified: true,
+                averageRating: true,
+                totalSales: true,
+              },
+            },
+          },
+        },
+        licenses: { orderBy: { price: "asc" } },
+        reviews: {
+          include: {
+            user: { select: { id: true, displayName: true, username: true, avatar: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        },
+        _count: { select: { reviews: true, favorites: true } },
+        purchases: {
+          where: {
+            license: { type: "EXCLUSIVE" },
+            paymentStatus: "COMPLETED",
+          },
+          select: { buyerId: true },
+        },
+      },
+    });
+
+    if (!beat) {
+      return NextResponse.json({ error: "Beat introuvable" }, { status: 404 });
+    }
+
+    // Restriction d'accès si le beat est vendu en exclusivité
+    const exclusivePurchase = beat.purchases?.[0];
+    if (exclusivePurchase) {
+      const isBuyer = decoded?.userId === exclusivePurchase.buyerId;
+      const isSeller = decoded?.userId === beat.sellerId;
+      const isAdmin = decoded?.role === "ADMIN";
+
+      if (!isBuyer && !isSeller && !isAdmin) {
+        return NextResponse.json(
+          { error: "Ce beat a été vendu en exclusivité et n'est plus accessible au public." },
+          { status: 403 }
+        );
+      }
+    }
+
+    return NextResponse.json({ beat });
+  } catch (error) {
+    console.error("GET /api/beats/[id] error:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: NextRequest, context: any) {
   try {
+
     let ctx = context;
     if (typeof ctx?.then === "function") ctx = await ctx;
     let params = ctx?.params;

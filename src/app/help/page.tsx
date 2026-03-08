@@ -20,8 +20,8 @@ const FAQ_CATEGORIES = [
     name: "Licences",
     icon: Shield,
     questions: [
-      { q: "Quelle est la différence entre les licences ?", a: "La Licence Basic permet une utilisation limitée (5 000 copies, 100K streams). La Licence Premium offre plus de droits (50 000 copies, 500K streams, radio). La Licence Exclusive vous donne les droits complets et exclusifs sur le beat." },
-      { q: "Puis-je utiliser un beat acheté pour un clip ?", a: "Oui, selon la licence choisie. La Licence Basic permet 1 clip, la Premium 3 clips, et l'Exclusive offre un usage illimité." },
+      { q: "Quelle est la différence entre les licences ?", a: "La Licence Basic permet une utilisation limitée (2 500 copies, 5 000 streams). La Licence Premium (Non-Exclusive) offre un usage commercial étendu (10 000 copies, 250 000 streams, monétisation). La Licence Exclusive vous cède les droits complets, inclut les pistes séparées (Trackout) et retire le beat du catalogue." },
+      { q: "Puis-je utiliser un beat acheté pour un clip ?", a: "Oui, mais cela dépend de la licence. La Licence Basic ne permet pas de monétiser sur YouTube, la Premium (Non-Exclusive) autorise la monétisation pour vos clips, et l'Exclusive offre un usage commercial totalement illimité." },
       { q: "Qu'est-ce qu'une licence exclusive ?", a: "Une licence exclusive signifie que le beat est retiré de la vente et que vous en devenez le seul détenteur. Les acheteurs précédents conservent leurs droits selon leur licence." },
     ],
   },

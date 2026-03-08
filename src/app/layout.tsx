@@ -4,6 +4,8 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
+import { GlobalAudioPlayer } from "@/components/layout/GlobalAudioPlayer";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -39,7 +41,10 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <SocketProvider>
-              {children}
+              <AudioPlayerProvider>
+                {children}
+                <GlobalAudioPlayer />
+              </AudioPlayerProvider>
             </SocketProvider>
           </CartProvider>
         </AuthProvider>

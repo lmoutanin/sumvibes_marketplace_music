@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
-import { ChevronLeft, Download, Music, FileText, Search, Clock, CheckCircle, ExternalLink, Loader2, AlertCircle } from "lucide-react";
+import { ChevronLeft, Download, Music, FileText, Search, Clock, CheckCircle, ExternalLink, Loader2, AlertCircle, X, Zap, Crown } from "lucide-react";
 
 interface Purchase {
   id: string;
@@ -32,7 +32,7 @@ export default function DownloadsPage() {
     fetch("/api/purchases", { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => setPurchases(d.purchases || []))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -56,7 +56,7 @@ export default function DownloadsPage() {
   });
 
   const getFormat = (l: Purchase["license"]) => {
-    if (l.type === "EXCLUSIVE") return "WAV + Stems";
+    if (l.type === "EXCLUSIVE") return "MP3 + WAV + Trackout";
     if (l.type === "PREMIUM") return "WAV + MP3";
     return "MP3";
   };
@@ -102,37 +102,69 @@ export default function DownloadsPage() {
             <div className="space-y-4">
               {filtered.map(item => {
                 const producerName = item.beat.seller?.sellerProfile?.artistName || item.beat.seller?.displayName || item.beat.seller?.username || "Producteur inconnu";
-                const isExclusive = item.license.name.toLowerCase().includes("exclusive");
-                const isPremium = item.license.name.toLowerCase().includes("premium");
+                const isExclusive = item.license.type === "EXCLUSIVE";
+                const isPremium = item.license.type === "PREMIUM";
+
+                const displayLicenseName = isExclusive ? "EXCLUSIVE" : isPremium ? "NON-EXCLUSIVE" : "BASIC";
+
                 return (
-                  <div key={item.id} className="glass rounded-2xl p-6">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-                          {item.beat.coverImage
-                            ? <img src={item.beat.coverImage} alt={item.beat.title} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full bg-brand-gold/10 flex items-center justify-center"><Music className="w-7 h-7 text-brand-gold" /></div>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-lg">{item.beat.title}</h3>
-                          <p className="text-sm text-slate-400"><Link href={`/producers/${item.beat.seller?.id}`} className="hover:text-brand-gold transition-colors">{producerName}</Link> · {item.beat.genre[0]} · {item.beat.bpm} BPM{item.beat.key ? ` · ${item.beat.key}` : ""}</p>
-                        </div>
+                  <div key={item.id} className="glass rounded-2xl p-6 flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-brand-gold/30 transition-all">
+                    {/* Cover */}
+                    <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 relative bg-white/5 border border-white/10 group-hover:border-brand-gold/30 transition-colors flex items-center justify-center">
+                      <Music className="w-8 h-8 text-white/20 absolute" />
+                      {item.beat.coverImage && (
+                        <img
+                          src={item.beat.coverImage.startsWith('http') || item.beat.coverImage.startsWith('/') ? item.beat.coverImage : `/uploads/covers/${item.beat.coverImage}`}
+                          alt=""
+                          className="w-full h-full object-cover relative z-10"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
+                        <h3 className="text-xl font-bold text-white truncate group-hover:text-brand-gold transition-colors">{item.beat.title}</h3>
+                        <span className={`inline-flex items-center text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md self-start ${isExclusive ? "bg-violet-500/20 text-violet-300 border border-violet-500/30" : isPremium ? "bg-brand-gold/20 text-brand-gold border border-brand-gold/30" : "bg-blue-500/20 text-blue-300 border border-blue-500/30"}`}>
+                          LICENCE {displayLicenseName}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${isExclusive ? "bg-purple-500/20 text-purple-400" : isPremium ? "bg-brand-gold/20 text-brand-gold" : "bg-white/10 text-white"}`}>{item.license.name}</span>
-                        <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(item.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      <div className="flex items-center gap-2 text-sm text-slate-400 mb-3">
+                        <span className="font-medium text-slate-300">{producerName}</span>
+                        <span>•</span>
+                        <span>{item.beat.bpm} BPM</span>
+                        {item.beat.key && (
+                          <>
+                            <span>•</span>
+                            <span>{item.beat.key}</span>
+                          </>
+                        )}
                       </div>
-                      <div className="text-sm text-right">
-                        <div className="text-slate-300">{getFormat(item.license)}</div>
-                        <div className="text-xs text-slate-400">{Number(item.amount).toFixed(2)} €</div>
-                        {isExclusive && <div className="text-xs text-green-400 flex items-center gap-1 justify-end mt-1"><CheckCircle className="w-3 h-3" />Illimité</div>}
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
+                          <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+                          <span className="text-slate-300">Format: <span className="font-bold text-white">{getFormat(item.license)}</span></span>
+                        </span>
+                        <span className="flex items-center gap-1.5 text-slate-500">
+                          <Clock className="w-3.5 h-3.5" />
+                          Acheté le {new Date(item.createdAt).toLocaleDateString("fr-FR")}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <a href={`/api/purchases/${item.id}/download?token=${token}`} className="btn-primary px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
-                          <Download className="w-4 h-4" /> Télécharger
-                        </a>
-                        <Link href={`/product/${item.beat.slug}`} className="glass p-2 rounded-xl hover:bg-white/10" title="Voir le produit"><ExternalLink className="w-4 h-4" /></Link>
-                        <button className="glass p-2 rounded-xl hover:bg-white/10" title="Voir la licence"><FileText className="w-4 h-4" /></button>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-row md:flex-col justify-center gap-3 md:pl-6 md:border-l border-white/10">
+                      <a href={`/api/purchases/${item.id}/download?token=${token}`} className="flex-1 md:flex-none btn-primary bg-brand-gold hover:bg-brand-gold/90 text-slate-900 px-5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all">
+                        <Download className="w-4 h-4" /> Télécharger
+                      </a>
+                      <div className="flex gap-2">
+                        <Link href={`/product/${item.beat.slug}`} className="flex-1 glass bg-white/5 hover:bg-white/10 p-2.5 rounded-xl flex items-center justify-center transition-colors text-slate-300 hover:text-white" title="Voir le beat">
+                          <ExternalLink className="w-4 h-4" />
+                        </Link>
+                        <button className="flex-1 glass bg-white/5 hover:bg-white/10 p-2.5 rounded-xl flex items-center justify-center transition-colors text-slate-300 hover:text-white" title="Contrat de licence">
+                          <FileText className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -141,19 +173,60 @@ export default function DownloadsPage() {
             </div>
           )}
 
-          <div className="glass rounded-3xl p-8 mt-10">
-            <h3 className="font-bold font-display text-lg mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-brand-gold" />Rappel des licences</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { name: "Basic", color: "", items: ["Format MP3", "Usage non-commercial", "Crédit obligatoire"] },
-                { name: "Premium", color: "border border-brand-gold/20", items: ["WAV + MP3", "Usage commercial", "Distribution limitée"] },
-                { name: "Exclusive", color: "border border-purple-400/20", items: ["WAV + Stems", "Droits complets", "Beat retiré du catalogue"] },
-              ].map(l => (
-                <div key={l.name} className={`glass rounded-xl p-4 ${l.color}`}>
-                  <h4 className="font-bold text-sm mb-2">{l.name}</h4>
-                  <ul className="text-xs text-slate-400 space-y-1">{l.items.map(i => <li key={i}>• {i}</li>)}</ul>
-                </div>
-              ))}
+          {/* Nouveau bloc récapitulatif des licences */}
+          <div className="glass rounded-3xl p-8 mt-12 border-t-4 border-t-brand-gold/50 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/5 blur-3xl rounded-full pointer-events-none" />
+
+            <div className="flex items-center gap-4 mb-8 relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
+                <FileText className="w-7 h-7 text-brand-gold" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold font-display text-white">Rappel d'utilisation des licences</h3>
+                <p className="text-sm text-slate-400 mt-1">Ce que vous pouvez faire avec vos téléchargements</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+              {/* Basic */}
+              <div className="glass bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/50 transition-colors hover:shadow-[0_0_30px_rgba(59,130,246,0.1)]">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Music className="w-20 h-20 text-blue-400" /></div>
+                <h4 className="font-bold text-xl text-blue-300 mb-5 flex items-center gap-2">Licence Basic</h4>
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-blue-400 mt-0 flex-shrink-0" /> Fichier : MP3 Haute Qualité</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-blue-400 mt-0 flex-shrink-0" /> Streams : Jusqu'à 5 000 écoutes</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-blue-400 mt-0 flex-shrink-0" /> Distribution : Jusqu'à 2 500 copies</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-blue-400 mt-0 flex-shrink-0" /> Usage : Commercial Limité (Non-monétisé sur YouTube)</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-blue-400 mt-0 flex-shrink-0" /> Crédit : Mention obligatoire</li>
+                </ul>
+              </div>
+
+              {/* Premium */}
+              <div className="glass bg-brand-gold/5 border border-brand-gold/20 rounded-2xl p-6 relative overflow-hidden group hover:border-brand-gold/50 transition-colors hover:shadow-[0_0_30px_rgba(254,204,51,0.15)]">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Zap className="w-20 h-20 text-brand-gold" /></div>
+                <h4 className="font-bold text-xl text-brand-gold mb-5 flex items-center gap-2">Licence Non-Exclusive</h4>
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-brand-gold mt-0 flex-shrink-0" /> Fichiers : WAV + MP3</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-brand-gold mt-0 flex-shrink-0" /> Streams : Jusqu'à 250 000 écoutes</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-brand-gold mt-0 flex-shrink-0" /> Distribution : Jusqu'à 10 000 copies</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-brand-gold mt-0 flex-shrink-0" /> Usage : Commercial Étendu</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-brand-gold mt-0 flex-shrink-0" /> Monétisation : Autorisée</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-brand-gold mt-0 flex-shrink-0" /> Crédit : Mention obligatoire</li>
+                </ul>
+              </div>
+
+              {/* Exclusive */}
+              <div className="glass bg-violet-500/5 border border-violet-500/20 rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/50 transition-colors hover:shadow-[0_0_30px_rgba(139,92,246,0.1)]">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Crown className="w-20 h-20 text-violet-400" /></div>
+                <h4 className="font-bold text-xl text-violet-300 mb-5 flex items-center gap-2">Licence Exclusive</h4>
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-violet-400 mt-0 flex-shrink-0" /> Fichiers : WAV + MP3 + Trackout</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-violet-400 mt-0 flex-shrink-0" /> Streams & Ventes : Illimités</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-violet-400 mt-0 flex-shrink-0" /> Usage : Commercial Illimité</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-violet-400 mt-0 flex-shrink-0" /> Exclusivité : Beat retiré de la vente</li>
+                  <li className="flex items-start gap-3 text-sm text-slate-300 font-medium"><CheckCircle className="w-5 h-5 text-violet-400 mt-0 flex-shrink-0" /> Droits : Contrat de cession inclus</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
