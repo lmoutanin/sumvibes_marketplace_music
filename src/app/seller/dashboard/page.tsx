@@ -32,7 +32,7 @@ interface SellerStats {
     sellerEarnings: number;
     createdAt: string;
     beat: { id: string; title: string; coverImage: string | null };
-    buyer: { id: string; displayName: string | null; artistName?: string; avatar: string | null };
+    buyer: { id: string; displayName: string | null; username: string; avatar: string | null };
     license: { id: string; name: string };
   }>;
   topBeats: Array<{
@@ -208,7 +208,7 @@ export default function SellerDashboardPage() {
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none"
+                      className="text-white text-sm focus:outline-none"
                     >
                       <option value="week">7 derniers jours</option>
                       <option value="month">Ce mois</option>
@@ -257,14 +257,6 @@ export default function SellerDashboardPage() {
                       <div className="flex-1">
                         <div className="font-semibold text-sm">Mes beats</div>
                         <div className="text-xs text-slate-400">{stats.overview.totalBeats} productions</div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-slate-400" />
-                    </Link>
-                    <Link href="/seller/licenses" className="flex items-center gap-3 glass rounded-xl p-4 hover:bg-white/5">
-                      <FileText className="w-5 h-5 text-blue-400" />
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm">Licences</div>
-                        <div className="text-xs text-slate-400">Configurer vos tarifs</div>
                       </div>
                       <ArrowRight className="w-4 h-4 text-slate-400" />
                     </Link>
@@ -320,7 +312,7 @@ export default function SellerDashboardPage() {
                         {stats.recentSales.map((sale) => (
                           <tr key={sale.id} className="border-b border-white/5 text-sm">
                             <td className="py-4 font-semibold">{sale.beat.title}</td>
-                            <td className="py-4 text-slate-400">{sale.buyer.displayName || sale.buyer.artistName || "Acheteur"}</td>
+                            <td className="py-4 text-slate-400">{sale.buyer.displayName || sale.buyer.username || "Acheteur"}</td>
                             <td className="py-4">
                               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${sale.license.name.toLowerCase().includes("exclusive") ? "bg-purple-500/20 text-purple-400" :
                                 sale.license.name.toLowerCase().includes("premium") ? "bg-brand-gold/20 text-brand-gold" :

@@ -647,7 +647,7 @@ export default function SettingsPage() {
                       </label>
                       <select
                         name="country"
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50"
+                        className="w-full text-white focus:outline-none"
                         defaultValue={(user as any).country ?? "FR"}
                       >
                         <option value="FR">France</option>

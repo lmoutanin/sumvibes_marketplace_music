@@ -294,18 +294,16 @@ export default function CataloguePage() {
                 <SelectFilter value={selectedMood} onChange={setSelectedMood} options={MOODS} active={selectedMood !== "Tous"} />
                 <SelectFilter value={selectedInstrument} onChange={setSelectedInstrument} options={["Tous", ...INSTRUMENTS]} active={selectedInstrument !== "Tous"} />
                 <SelectFilter value={selectedBpm.label} onChange={(label) => setSelectedBpm(BPM_RANGES.find((r) => r.label === label) ?? BPM_RANGES[0])} options={BPM_RANGES.map((r) => r.label)} active={selectedBpm.min !== undefined} />
-                <div className="relative">
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white text-sm focus:outline-none focus:border-brand-gold/50 cursor-pointer"
-                    style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#fff" }}
-                  >
-                    <option value="latest" className="bg-brand-dark">Plus récents</option>
-                    <option value="popular" className="bg-brand-dark">Populaires</option>
-                    <option value="price_low" className="bg-brand-dark">Prix ↑</option>
-                    <option value="price_high" className="bg-brand-dark">Prix ↓</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="w-full text-white text-sm focus:outline-none"
+                >
+                  <option value="latest">Plus récents</option>
+                  <option value="popular">Populaires</option>
+                  <option value="price_low">Prix ↑</option>
+                  <option value="price_high">Prix ↓</option>
+                </select>
                 {activeFilterCount > 0 && (
                   <button onClick={resetFilters} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/15 text-slate-400 text-xs font-semibold hover:border-red-400/50 hover:text-red-400 transition-all">
                     <X className="w-3.5 h-3.5" /> Réinitialiser
@@ -381,15 +379,12 @@ export default function CataloguePage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-white/[0.07]">
-                  <div className="relative">
-                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 pr-9 text-white text-sm focus:outline-none cursor-pointer">
-                      <option value="latest" className="bg-brand-dark">Plus récents</option>
-                      <option value="popular" className="bg-brand-dark">Populaires</option>
-                      <option value="price_low" className="bg-brand-dark">Prix ↑</option>
-                      <option value="price_high" className="bg-brand-dark">Prix ↓</option>
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
-                  </div>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="w-full text-white text-sm focus:outline-none">
+                    <option value="latest">Plus récents</option>
+                    <option value="popular">Populaires</option>
+                    <option value="price_low">Prix ↑</option>
+                    <option value="price_high">Prix ↓</option>
+                  </select>
                   {activeFilterCount > 0 && (
                     <button onClick={resetFilters} className="text-xs text-slate-500 hover:text-red-400 flex items-center gap-1 transition-colors">
                       <X className="w-3.5 h-3.5" /> Réinitialiser

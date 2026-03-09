@@ -326,11 +326,7 @@ export default function AccountPage() {
                             <td className="py-4 text-slate-400 flex items-center gap-1">
                               <Clock className="w-3 h-3" /> {new Date(purchase.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </td>
-                            <td className="py-4 text-right">
-                              <a href={`/api/purchases/${purchase.id}/download?token=${token}`} className="btn-primary px-3 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1">
-                                <Download className="w-4 h-4" /> DL
-                              </a>
-                            </td>
+
                           </tr>
                         ))}
                       </tbody>

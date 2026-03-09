@@ -1,9 +1,38 @@
  @import "tailwindcss";
 
- /* Style custom pour les options de select */
- select option {
-   background-color: var(--background-secondary);
+ /* Style premium pour les éléments select */
+ select {
+   appearance: none;
+   background-color: var(--card);
+   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23fecc33'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+   background-repeat: no-repeat;
+   background-position: right 1rem center;
+   background-size: 1.25rem;
+   padding-right: 2.5rem;
+   border: 1px solid var(--card-border);
+   border-radius: 0.75rem;
    color: var(--foreground);
+   backdrop-filter: blur(10px);
+   transition: all 0.3s ease;
+   cursor: pointer;
+ }
+
+ select:hover {
+   background-color: var(--card-hover);
+   border-color: rgba(254, 204, 51, 0.4);
+   box-shadow: 0 0 15px rgba(254, 204, 51, 0.1);
+ }
+
+ select:focus {
+   outline: none;
+   border-color: var(--color-brand-gold);
+   box-shadow: 0 0 0 2px rgba(254, 204, 51, 0.2);
+ }
+
+ select option {
+   background-color: #1a1060;
+   color: #ffffff;
+   padding: 1rem;
  }
 
  @theme {

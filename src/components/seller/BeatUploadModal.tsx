@@ -282,7 +282,7 @@ export function BeatUploadModal({ isOpen, onClose, onSuccess }: BeatUploadModalP
                 required
                 value={formData.genre}
                 onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-brand-gold"
+                className="w-full text-white focus:outline-none"
               >
                 <option value="">Sélectionner</option>
                 <option value="Trap">Trap</option>
@@ -300,7 +300,7 @@ export function BeatUploadModal({ isOpen, onClose, onSuccess }: BeatUploadModalP
                 required
                 value={formData.mood}
                 onChange={(e) => setFormData({ ...formData, mood: e.target.value })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-brand-gold"
+                className="w-full text-white focus:outline-none"
               >
                 <option value="">Sélectionner</option>
                 <option value="Sombre">Sombre</option>
