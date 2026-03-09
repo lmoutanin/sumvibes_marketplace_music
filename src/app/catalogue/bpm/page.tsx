@@ -34,7 +34,7 @@ export default function BpmPage() {
     fetch("/api/favorites", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((data) => { if (data.favorites) setLikedIds(new Set(data.favorites.map((f: any) => f.beatId))); })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   const toggleLike = async (id: string) => {
@@ -85,9 +85,8 @@ export default function BpmPage() {
               <button
                 key={range.id}
                 onClick={() => setSelectedRange(selectedRange === range.id ? null : range.id)}
-                className={`glass rounded-2xl p-6 text-left hover:scale-[1.03] transition-all group ${
-                  selectedRange === range.id ? "ring-2 ring-brand-gold bg-brand-gold/5" : ""
-                }`}
+                className={`glass rounded-2xl p-6 text-left hover:scale-[1.03] transition-all group ${selectedRange === range.id ? "ring-2 ring-brand-gold bg-brand-gold/5" : ""
+                  }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-3xl">{range.emoji}</span>
@@ -115,9 +114,8 @@ export default function BpmPage() {
               {bpmRanges.map((range) => (
                 <div key={range.id} className="flex-1 flex flex-col items-center gap-2">
                   <div
-                    className={`w-full rounded-t-lg transition-all ${
-                      selectedRange === range.id ? "bg-brand-gold" : "bg-brand-gold/30 hover:bg-brand-gold/50"
-                    }`}
+                    className={`w-full rounded-t-lg transition-all ${selectedRange === range.id ? "bg-brand-gold" : "bg-brand-gold/30 hover:bg-brand-gold/50"
+                      }`}
                     style={{ height: `${Math.max(20, (range.count / 300) * 100)}%` }}
                   />
                   <span className="text-xs text-slate-400 text-center">{range.label.split(" ")[0]}</span>
@@ -181,11 +179,7 @@ export default function BpmPage() {
         </div>
       </main>
 
-      <footer className="border-t border-white/10 px-6 py-8">
-        <div className="mx-auto max-w-7xl text-center text-slate-500 text-sm">
-          © 2026 SUMVIBES by SAS BE GREAT. Tous droits réservés.
-        </div>
-      </footer>
+
 
       <LicensePickerModal
         beat={licenseTarget}

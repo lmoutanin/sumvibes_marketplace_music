@@ -39,7 +39,7 @@ export default function StylePage() {
     fetch("/api/favorites", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((data) => { if (data.favorites) setLikedIds(new Set(data.favorites.map((f: any) => f.beatId))); })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   const toggleLike = async (id: string) => {
@@ -92,9 +92,8 @@ export default function StylePage() {
               <button
                 key={style.id}
                 onClick={() => setSelectedStyle(selectedStyle === style.id ? null : style.id)}
-                className={`glass rounded-2xl p-6 text-center hover:scale-[1.03] transition-all group ${
-                  selectedStyle === style.id ? "ring-2 ring-brand-gold bg-brand-gold/5" : ""
-                }`}
+                className={`glass rounded-2xl p-6 text-center hover:scale-[1.03] transition-all group ${selectedStyle === style.id ? "ring-2 ring-brand-gold bg-brand-gold/5" : ""
+                  }`}
               >
                 <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${style.color} flex items-center justify-center mb-3`}>
                   <span className="text-3xl">{style.emoji}</span>
@@ -160,11 +159,7 @@ export default function StylePage() {
         </div>
       </main>
 
-      <footer className="border-t border-white/10 px-6 py-8">
-        <div className="mx-auto max-w-7xl text-center text-slate-500 text-sm">
-          © 2026 SUMVIBES by SAS BE GREAT. Tous droits réservés.
-        </div>
-      </footer>
+
 
       <LicensePickerModal
         beat={licenseTarget}

@@ -339,58 +339,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-white/10 px-6 py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Music className="w-8 h-8 text-brand-gold" />
-                <span className="text-2xl font-bold text-gradient">SUMVIBES</span>
-              </div>
-              <p className="text-slate-400 mb-4 max-w-md">
-                La marketplace premium pour les compositeurs visionnaires et les artistes en quête d&apos;excellence.
-              </p>
-              <div className="flex gap-4">
-                <Link href="/community" className="glass w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10">
-                  <span className="text-lg">𝕏</span>
-                </Link>
-                <Link href="/community" className="glass w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10">
-                  <span className="text-lg">IG</span>
-                </Link>
-                <Link href="/community" className="glass w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10">
-                  <span className="text-lg">YT</span>
-                </Link>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold mb-4">Plateforme</h3>
-              <ul className="space-y-3 text-slate-400">
-                <li><Link href="/catalogue" className="hover:text-brand-gold">Catalogue</Link></li>
-                <li><Link href="/producers" className="hover:text-brand-gold">Producteurs</Link></li>
-                <li><Link href="/community" className="hover:text-brand-gold">Communauté</Link></li>
-                <li><Link href="/blog" className="hover:text-brand-gold">Blog</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold mb-4">Support</h3>
-              <ul className="space-y-3 text-slate-400">
-                <li><Link href="/help" className="hover:text-brand-gold">Aide</Link></li>
-                <li><Link href="/cgv" className="hover:text-brand-gold">CGV</Link></li>
-                <li><Link href="/privacy" className="hover:text-brand-gold">Confidentialité</Link></li>
-                <li><Link href="/contact" className="hover:text-brand-gold">Contact</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-white/10 pt-8 text-center text-slate-500 text-sm">
-            © 2026 SUMVIBES by SAS BE GREAT. Tous droits réservés. | Fait avec 💜 pour les artistes
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

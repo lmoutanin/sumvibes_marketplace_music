@@ -74,8 +74,8 @@ export default function ProducersPage() {
                     key={g}
                     onClick={() => setSelectedGenre(g)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedGenre === g
-                        ? "bg-brand-gold text-slate-900 border-brand-gold shadow-[0_0_15px_rgba(212,175,55,0.3)]"
-                        : "glass hover:bg-white/10 text-slate-300 border-white/10"
+                      ? "bg-brand-gold text-slate-900 border-brand-gold shadow-[0_0_15px_rgba(212,175,55,0.3)]"
+                      : "glass hover:bg-white/10 text-slate-300 border-white/10"
                       }`}
                   >
                     {g}
@@ -212,12 +212,6 @@ export default function ProducersPage() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-white/10 px-6 py-8">
-        <div className="mx-auto max-w-7xl text-center text-slate-500 text-sm">
-          © 2026 SUMVIBES by SAS BE GREAT. Tous droits réservés.
-        </div>
-      </footer>
     </div>
   );
 }

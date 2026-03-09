@@ -107,11 +107,10 @@ export default function RegisterPage() {
               onClick={() =>
                 setFormData((prev) => ({ ...prev, role: "BUYER" }))
               }
-              className={`glass rounded-2xl p-6 text-center transition-all hover:scale-[1.02] ${
-                formData.role === "BUYER"
+              className={`glass rounded-2xl p-6 text-center transition-all hover:scale-[1.02] ${formData.role === "BUYER"
                   ? "ring-2 ring-brand-gold bg-brand-gold/5"
                   : ""
-              }`}
+                }`}
             >
               <ShoppingBag
                 className={`w-10 h-10 mx-auto mb-3 ${formData.role === "BUYER" ? "text-brand-gold" : "text-slate-400"}`}
@@ -126,11 +125,10 @@ export default function RegisterPage() {
               onClick={() =>
                 setFormData((prev) => ({ ...prev, role: "SELLER" }))
               }
-              className={`glass rounded-2xl p-6 text-center transition-all hover:scale-[1.02] ${
-                formData.role === "SELLER"
+              className={`glass rounded-2xl p-6 text-center transition-all hover:scale-[1.02] ${formData.role === "SELLER"
                   ? "ring-2 ring-brand-gold bg-brand-gold/5"
                   : ""
-              }`}
+                }`}
             >
               <Music
                 className={`w-10 h-10 mx-auto mb-3 ${formData.role === "SELLER" ? "text-brand-gold" : "text-slate-400"}`}
@@ -365,12 +363,6 @@ export default function RegisterPage() {
           </div>
         </div>
       </main>
-
-      <footer className="border-t border-white/10 px-6 py-8">
-        <div className="mx-auto max-w-7xl text-center text-slate-500 text-sm">
-          © 2026 SUMVIBES by SAS BE GREAT. Tous droits réservés.
-        </div>
-      </footer>
     </div>
   );
 }

@@ -13,12 +13,12 @@ import { Avatar } from "@/components/ui/Avatar";
 const POSTS_PER_PAGE = 10;
 
 const CATEGORIES = [
-  { id: "all",           label: "Tout",          emoji: "🗂️" },
-  { id: "PRODUCTION",    label: "Production",     emoji: "🎹" },
-  { id: "MARKETING",     label: "Marketing",      emoji: "📈" },
-  { id: "EQUIPMENT",     label: "Équipement",     emoji: "🔌" },
-  { id: "COLLABORATION", label: "Collaboration",  emoji: "🤝" },
-  { id: "OTHER",         label: "Général",        emoji: "💬" },
+  { id: "all", label: "Tout", emoji: "🗂️" },
+  { id: "PRODUCTION", label: "Production", emoji: "🎹" },
+  { id: "MARKETING", label: "Marketing", emoji: "📈" },
+  { id: "EQUIPMENT", label: "Équipement", emoji: "🔌" },
+  { id: "COLLABORATION", label: "Collaboration", emoji: "🤝" },
+  { id: "OTHER", label: "Général", emoji: "💬" },
 ];
 
 interface Post {
@@ -95,9 +95,8 @@ function PostRow({ post, onLike, likingId, isLoggedIn }: {
           <button
             onClick={(e) => { e.preventDefault(); onLike(post.id); }}
             disabled={!isLoggedIn || likingId === post.id}
-            className={`flex items-center gap-1 text-xs transition-colors ${
-              isLoggedIn ? "hover:text-brand-gold cursor-pointer" : "cursor-default"
-            } ${likingId === post.id ? "text-brand-gold" : "text-slate-400"}`}
+            className={`flex items-center gap-1 text-xs transition-colors ${isLoggedIn ? "hover:text-brand-gold cursor-pointer" : "cursor-default"
+              } ${likingId === post.id ? "text-brand-gold" : "text-slate-400"}`}
             title={isLoggedIn ? "Liker ce post" : "Connectez-vous pour liker"}
           >
             <ThumbsUp className="w-3.5 h-3.5" />{post.likes || 0}
@@ -203,11 +202,11 @@ export default function ForumPage() {
     } finally { setLikingId(null); }
   };
 
-  const pinned    = posts.filter(p => p.pinned);
-  const regular   = posts.filter(p => !p.pinned);
+  const pinned = posts.filter(p => p.pinned);
+  const regular = posts.filter(p => !p.pinned);
   const totalPages = Math.ceil(regular.length / POSTS_PER_PAGE);
-  const safePage   = Math.min(Math.max(currentPage, 1), Math.max(totalPages, 1));
-  const pagePosts  = regular.slice((safePage - 1) * POSTS_PER_PAGE, safePage * POSTS_PER_PAGE);
+  const safePage = Math.min(Math.max(currentPage, 1), Math.max(totalPages, 1));
+  const pagePosts = regular.slice((safePage - 1) * POSTS_PER_PAGE, safePage * POSTS_PER_PAGE);
 
   return (
     <div className="relative flex-1 flex flex-col bg-gradient-premium">
@@ -237,9 +236,8 @@ export default function ForumPage() {
           <div className="flex gap-2 flex-wrap mb-6">
             {CATEGORIES.map(c => (
               <button key={c.id} onClick={() => setActiveCategory(c.id)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                  activeCategory === c.id ? "bg-brand-gold text-brand-purple" : "glass hover:bg-white/10"
-                }`}>
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === c.id ? "bg-brand-gold text-brand-purple" : "glass hover:bg-white/10"
+                  }`}>
                 {c.emoji} {c.label}
               </button>
             ))}
@@ -312,16 +310,15 @@ export default function ForumPage() {
 
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
                         const isNear = Math.abs(page - safePage) <= 1 || page === 1 || page === totalPages;
-                        const isDot  = !isNear && (page === safePage - 2 || page === safePage + 2);
+                        const isDot = !isNear && (page === safePage - 2 || page === safePage + 2);
                         if (!isNear && !isDot) return null;
                         if (isDot) return <span key={page} className="text-slate-600 text-sm px-1">…</span>;
                         return (
                           <button key={page} onClick={() => setCurrentPage(page)}
-                            className={`w-8 h-8 rounded-full text-sm font-semibold transition-all border ${
-                              page === safePage
+                            className={`w-8 h-8 rounded-full text-sm font-semibold transition-all border ${page === safePage
                                 ? "bg-brand-gold text-brand-purple border-brand-gold shadow-md shadow-brand-gold/25"
                                 : "border-white/10 text-slate-400 hover:border-white/25 hover:text-white hover:bg-white/6"
-                            }`}>
+                              }`}>
                             {page}
                           </button>
                         );
@@ -440,9 +437,7 @@ export default function ForumPage() {
         </div>
       )}
 
-      <footer className="border-t border-white/10 px-6 py-8">
-        <div className="mx-auto max-w-7xl text-center text-slate-500 text-sm">© 2026 SUMVIBES by SAS BE GREAT.</div>
-      </footer>
     </div>
+    </div >
   );
 }

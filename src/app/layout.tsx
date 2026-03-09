@@ -6,6 +6,7 @@ import { SocketProvider } from "@/contexts/SocketContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { GlobalAudioPlayer } from "@/components/layout/GlobalAudioPlayer";
+import { Footer } from "@/components/layout/Footer";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -37,12 +38,15 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
       </head>
-      <body className={`${poppins.variable} ${cormorant.variable} antialiased`}>
+      <body className={`${poppins.variable} ${cormorant.variable} antialiased min-h-screen flex flex-col`}>
         <AuthProvider>
           <CartProvider>
             <SocketProvider>
               <AudioPlayerProvider>
-                {children}
+                <div className="flex-grow flex flex-col">
+                  {children}
+                </div>
+                <Footer />
                 <GlobalAudioPlayer />
               </AudioPlayerProvider>
             </SocketProvider>

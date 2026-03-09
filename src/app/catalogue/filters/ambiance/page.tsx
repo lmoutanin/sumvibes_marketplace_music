@@ -34,7 +34,7 @@ export default function AmbiancePage() {
     fetch("/api/favorites", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((data) => { if (data.favorites) setLikedIds(new Set(data.favorites.map((f: any) => f.beatId))); })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   const toggleLike = async (id: string) => {
@@ -85,9 +85,8 @@ export default function AmbiancePage() {
               <button
                 key={mood.id}
                 onClick={() => setSelectedMood(selectedMood === mood.id ? null : mood.id)}
-                className={`glass rounded-2xl p-6 text-center hover:scale-[1.03] transition-all group ${
-                  selectedMood === mood.id ? "ring-2 ring-brand-gold bg-brand-gold/5" : ""
-                }`}
+                className={`glass rounded-2xl p-6 text-center hover:scale-[1.03] transition-all group ${selectedMood === mood.id ? "ring-2 ring-brand-gold bg-brand-gold/5" : ""
+                  }`}
               >
                 <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${mood.color} flex items-center justify-center mb-3`}>
                   <span className="text-3xl">{mood.emoji}</span>
@@ -153,11 +152,7 @@ export default function AmbiancePage() {
         </div>
       </main>
 
-      <footer className="border-t border-white/10 px-6 py-8">
-        <div className="mx-auto max-w-7xl text-center text-slate-500 text-sm">
-          © 2026 SUMVIBES by SAS BE GREAT. Tous droits réservés.
-        </div>
-      </footer>
+
 
       <LicensePickerModal
         beat={licenseTarget}
