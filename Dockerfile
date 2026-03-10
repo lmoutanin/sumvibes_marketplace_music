@@ -15,7 +15,7 @@ COPY . .
 # Rendre le script exécutable
 RUN chmod +x entrypoint.sh
 
-EXPOSE 3000
+EXPOSE 4000
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["npm", "run", "dev"]

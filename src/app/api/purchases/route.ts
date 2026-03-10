@@ -3,6 +3,12 @@ import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { LicenseType, PaymentMethod } from "@prisma/client";
 
+function getFeeRateFromPlan(plan?: string | null): number {
+  if (plan === "PREMIUM_MONTHLY" || plan === "PREMIUM_YEARLY") return 0;
+  if (plan === "STANDARD_MONTHLY" || plan === "STANDARD_YEARLY") return 0.05;
+  return 0.15;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get("authorization")?.split(" ")[1];
@@ -31,6 +37,8 @@ export async function POST(req: NextRequest) {
     const invoiceItems: any[] = [];
     let invoiceSubtotal = 0;
     let invoiceTax = 0;
+    let invoiceCommission = 0;
+    let invoiceCommissionRate = 0;
     let invoiceUser: any = null;
     let sharedInvoiceNumber: string = "";
 
@@ -55,6 +63,19 @@ export async function POST(req: NextRequest) {
       } else {
         sharedInvoiceNumber = `FAC-${new Date().getFullYear()}-00001`; // "FAC-2026-00001"
       }
+
+      invoiceUser = await tx.user.findUnique({
+        where: { id: decoded.userId },
+        include: {
+          subscription: {
+            select: { plan: true },
+          },
+        },
+      });
+
+      const buyerPlan = invoiceUser?.subscription?.plan ?? "FREEMIUM";
+      const feeRate = getFeeRateFromPlan(buyerPlan);
+      invoiceCommissionRate = Number((feeRate * 100).toFixed(2));
 
       for (const item of cartItems) {
         if (!item.beatId) continue;
@@ -89,9 +110,9 @@ export async function POST(req: NextRequest) {
 
         // Calculer les montants
         const priceHT = Number(item.price);
-        const taxAmount = Number((priceHT * 0.20).toFixed(2));       // TVA 20%
-        const amount = Number((priceHT + taxAmount).toFixed(2));     // Total TTC
-        const platformFee = Number((priceHT * 0.15).toFixed(2));     // Commission 15% (sur HT)
+        const platformFee = Number((priceHT * feeRate).toFixed(2));   // Commission selon abonnement (sur HT)
+        const taxAmount = Number(((priceHT + platformFee) * 0.20).toFixed(2)); // TVA 20% sur HT + commission
+        const amount = Number((priceHT + platformFee + taxAmount).toFixed(2)); // Total TTC
         const sellerEarnings = Number((priceHT - platformFee).toFixed(2));
 
         // Créer l'achat
@@ -142,11 +163,8 @@ export async function POST(req: NextRequest) {
           amount: priceHT,
         });
         invoiceSubtotal += priceHT;
+        invoiceCommission += platformFee;
         invoiceTax += taxAmount;
-
-        if (!invoiceUser) {
-          invoiceUser = await tx.user.findUnique({ where: { id: decoded.userId } });
-        }
 
         results.push(purchase);
       }
@@ -174,8 +192,10 @@ export async function POST(req: NextRequest) {
 
       const payment = {
         subtotal: Number(invoiceSubtotal.toFixed(2)),
+        commission: Number(invoiceCommission.toFixed(2)),
+        commissionRate: invoiceCommissionRate,
         tax: Number(invoiceTax.toFixed(2)),
-        total: Number((invoiceSubtotal + invoiceTax).toFixed(2)),
+        total: Number((invoiceSubtotal + invoiceCommission + invoiceTax).toFixed(2)),
         invoice_nr: sharedInvoiceNumber,
         method: data.paymentMethod,
 
@@ -187,7 +207,7 @@ export async function POST(req: NextRequest) {
         licenseTypes: Array.from(licenseTypes),
       });
 
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:4000";
       await fetch(`${baseUrl}/api/invoice`, {
         method: "POST",
         headers: {

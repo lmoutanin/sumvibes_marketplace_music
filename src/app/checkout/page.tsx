@@ -18,12 +18,12 @@ export default function CheckoutPage() {
   const items = cart?.items ?? [];
   const subtotal = cart?.total ?? 0;
 
-  // Calcul des frais selon l'abonnement
+  // Calcul des comission selon l'abonnement
   const plan = user?.subscription?.plan || "FREEMIUM";
   const isPremium = plan === "PREMIUM_MONTHLY" || plan === "PREMIUM_YEARLY";
   const isStandard = plan === "STANDARD_MONTHLY" || plan === "STANDARD_YEARLY";
 
-  const feeRate = isPremium ? 0 : isStandard ? 0.05 : 0.10;
+  const feeRate = isPremium ? 0 : isStandard ? 0.05 : 0.15;
   const platformFee = subtotal * feeRate;
 
   const tax = (subtotal + platformFee) * 0.2;
@@ -189,7 +189,7 @@ export default function CheckoutPage() {
                 <div className="border-t border-white/10 pt-4 space-y-3">
                   <div className="flex justify-between text-slate-300 text-sm"><span>Sous-total</span><span>{subtotal.toFixed(2)} €</span></div>
                   <div className="flex justify-between text-slate-300 text-sm">
-                    <span>Frais de service ({feeRate * 100}%)</span>
+                    <span>comission de service ({feeRate * 100}%)</span>
                     <span>{feeRate === 0 ? "0.00" : platformFee.toFixed(2)} €</span>
                   </div>
                   <div className="flex justify-between text-slate-300 text-sm"><span>TVA (20%)</span><span>{tax.toFixed(2)} €</span></div>

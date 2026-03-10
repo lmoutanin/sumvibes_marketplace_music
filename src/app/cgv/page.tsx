@@ -50,7 +50,7 @@ export default function CgvPage() {
 
             <div>
               <h2 className="text-xl font-bold text-white mb-3">Article 6 — Commissions</h2>
-              <p>SUMVIBES prélève une commission de 15% sur chaque vente réalisée par un vendeur sur la plateforme. Cette commission couvre les frais de fonctionnement, d&apos;hébergement, de paiement et de support. Le vendeur perçoit 85% du montant de chaque vente.</p>
+              <p>SUMVIBES prélève une commission de 15% sur chaque vente réalisée par un vendeur sur la plateforme. Cette commission couvre les comission de fonctionnement, d&apos;hébergement, de paiement et de support. Le vendeur perçoit 85% du montant de chaque vente.</p>
             </div>
 
             <div>

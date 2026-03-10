@@ -28,7 +28,7 @@ export function AddToCartButton({ serviceId, sellerId }: { serviceId: string; se
         try {
             await addServiceToCart(serviceId);
             setAdded(true);
-            setTimeout(() => setAdded(false), 3000);
+            setTimeout(() => setAdded(false), 4000);
         } catch (err: any) {
             setError(err.message || "Erreur lors de l'ajout au panier");
         } finally {

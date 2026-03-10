@@ -112,7 +112,7 @@ export default function SellerSubscriptionsPage() {
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-green-400 shrink-0" />
-                                    <span><strong className="text-white">10%</strong> de frais sur vos achats</span>
+                                    <span><strong className="text-white">15%</strong> de comission sur vos achats</span>
                                 </div>
                             </div>
 
@@ -164,7 +164,7 @@ export default function SellerSubscriptionsPage() {
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-blue-400 shrink-0" />
-                                    <span>Frais réduits à <strong className="text-white">5%</strong> sur vos achats</span>
+                                    <span>comission réduits à <strong className="text-white">5%</strong> sur vos achats</span>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-blue-400 shrink-0" />
@@ -219,7 +219,7 @@ export default function SellerSubscriptionsPage() {
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-brand-gold shrink-0" />
-                                    <span><strong className="text-brand-gold text-base">0%</strong> de frais sur vos achats</span>
+                                    <span><strong className="text-brand-gold text-base">0%</strong> de comission sur vos achats</span>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-brand-gold shrink-0" />

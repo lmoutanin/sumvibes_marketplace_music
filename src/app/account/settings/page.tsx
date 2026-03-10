@@ -149,7 +149,7 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setTimeout(() => setSaved(false), 4000);
   };
 
   const handleProfileSave = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -195,7 +195,7 @@ export default function SettingsPage() {
       if (res.ok) {
         await refreshUser();
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setTimeout(() => setSaved(false), 4000);
       } else {
         const errorData = await res.json();
         setError(errorData.error || "Une erreur est survenue");
@@ -235,7 +235,7 @@ export default function SettingsPage() {
 
       if (res.ok) {
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setTimeout(() => setSaved(false), 4000);
         (e.target as HTMLFormElement).reset();
       } else {
         const errorData = await res.json();
@@ -275,7 +275,7 @@ export default function SettingsPage() {
       if (res.ok) {
         await refreshUser();
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setTimeout(() => setSaved(false), 4000);
       } else {
         const errorData = await res.json();
         setError(errorData.error || "Une erreur est survenue");
@@ -317,7 +317,7 @@ export default function SettingsPage() {
       if (res.ok) {
         await refreshUser();
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setTimeout(() => setSaved(false), 4000);
       } else {
         const errorData = await res.json();
         setError(errorData.error || "Une erreur est survenue");

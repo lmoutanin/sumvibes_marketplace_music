@@ -18,6 +18,8 @@ export const itemSchema = Joi.object({
 
 export const invoiceSchema = Joi.object({
     subtotal: Joi.number().required(),
+    commission: Joi.number().min(0).optional(),
+    commissionRate: Joi.number().min(0).optional(),
     tax: Joi.number().required(),
     total: Joi.number().required(),
     invoice_nr: Joi.string().required(),

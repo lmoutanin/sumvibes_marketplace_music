@@ -8,6 +8,8 @@ import { CheckCircle, Download, FileText, Music, ArrowRight, Mail, Loader2 } fro
 interface Purchase {
   id: string;
   amount: number;
+  platformFee: number;
+  taxAmount: number;
   invoiceNumber: string;
   beat: { title: string; coverImage: string; seller: { sellerProfile: { artistName: string } | null } };
   license: { name: string; type: string };
@@ -36,6 +38,9 @@ export default function CheckoutConfirmationPage() {
 
   const invoiceNumber = purchases[0]?.invoiceNumber ?? "—";
   const total = purchases.reduce((sum, p) => sum + Number(p.amount), 0);
+  const commission = purchases.reduce((sum, p) => sum + Number(p.platformFee || 0), 0);
+  const tax = purchases.reduce((sum, p) => sum + Number(p.taxAmount || 0), 0);
+  const subtotal = Number((total - commission - tax).toFixed(2));
 
   return (
     <div className="relative min-h-screen bg-gradient-premium">
@@ -70,6 +75,15 @@ export default function CheckoutConfirmationPage() {
             </div>
 
             <div className="border-t border-white/10 pt-6 space-y-4">
+              {!loading && purchases.length > 0 && (
+                <div className="glass rounded-2xl p-4 space-y-2 text-sm">
+                  <div className="flex justify-between text-slate-300"><span>Sous-total</span><span>{subtotal.toFixed(2)} €</span></div>
+                  <div className="flex justify-between text-slate-300"><span>Commission</span><span>{commission.toFixed(2)} €</span></div>
+                  <div className="flex justify-between text-slate-300"><span>TVA (20%)</span><span>{tax.toFixed(2)} €</span></div>
+                  <div className="border-t border-white/10 pt-2 flex justify-between font-bold text-white"><span>Total TTC</span><span>{total.toFixed(2)} €</span></div>
+                </div>
+              )}
+
               {loading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-8 h-8 animate-spin text-brand-gold" />

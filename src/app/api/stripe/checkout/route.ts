@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Calcul des frais selon l'abonnement du BUYER
+    // Calcul des comission selon l'abonnement du BUYER
     let platformFee = 0;
 
     const user = await prisma.user.findUnique({
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       const isPremium = plan === "PREMIUM_MONTHLY" || plan === "PREMIUM_YEARLY";
       const isStandard = plan === "STANDARD_MONTHLY" || plan === "STANDARD_YEARLY";
 
-      const feeRate = isPremium ? 0 : isStandard ? 0.05 : 0.10;
+      const feeRate = isPremium ? 0 : isStandard ? 0.05 : 0.15;
       platformFee = totalAmount * feeRate;
     }
 
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     // Pour le développement, retourner une session simulée
     const session = {
       id: `cs_test_${Date.now()}`,
-      url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout/confirmation?session_id=cs_test_${Date.now()}`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:4000"}/checkout/confirmation?session_id=cs_test_${Date.now()}`,
       amount_total: Math.round(totalAmount * 100),
       currency: "eur",
       payment_status: "unpaid",

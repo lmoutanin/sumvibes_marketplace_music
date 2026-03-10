@@ -26,6 +26,7 @@ interface InvoiceItem {
 interface InvoicePayment {
   invoice_nr: string;
   subtotal:   number;
+  commission?: number;
   tax:        number;
   total:      number;
 }
@@ -51,6 +52,7 @@ const euro = (n: number): string => `${Number(n).toFixed(2)}&nbsp;€`;
 // ─────────────────────────────────────────────────────────────────────────────
 export function generateInvoiceEmailHtml(data: InvoiceData): string {
   const { shipping, items, payment } = data;
+  const commission = Number(payment.commission || 0);
   const date        = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
   const year        = new Date().getFullYear();
   const firstName   = esc(shipping.name).split(" ")[0];
@@ -205,6 +207,10 @@ export function generateInvoiceEmailHtml(data: InvoiceData): string {
         <tr>
           <td style="padding:8px 0;color:${B.textMuted};font-size:13px;">Sous-total</td>
           <td style="padding:8px 0;text-align:right;color:${B.textSecond};font-size:13px;font-weight:600;">${euro(payment.subtotal)}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:${B.textMuted};font-size:13px;">Commission</td>
+          <td style="padding:8px 0;text-align:right;color:${B.textSecond};font-size:13px;font-weight:600;">${euro(commission)}</td>
         </tr>
         <tr>
           <td style="padding:8px 0 16px;color:${B.textMuted};font-size:13px;border-bottom:1px solid ${B.goldBorder};">TVA (20%)</td>

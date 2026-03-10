@@ -544,7 +544,7 @@ function MessagesContent() {
     fetchMessages(true);
 
     // Polling toutes les 3 secondes (fallback si socket ne délivre pas)
-    const interval = setInterval(() => fetchMessages(false), 3000);
+    const interval = setInterval(() => fetchMessages(false), 4000);
     return () => clearInterval(interval);
   }, [activeConvId, markAsRead]);
 

@@ -6,7 +6,7 @@ import { ContactSellerButton } from "./ContactSellerButton";
 import { AddToCartButton } from "./AddToCartButton";
 
 async function getService(id: string) {
-    const res = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/services/${id}`, {
+    const res = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:4000'}/api/services/${id}`, {
         cache: "no-store",
     });
 

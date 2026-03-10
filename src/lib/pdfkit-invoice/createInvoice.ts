@@ -27,6 +27,8 @@ export interface InvoiceItem {
 export interface InvoicePayment {
   invoice_nr: string;
   subtotal: number;
+  commission?: number;
+  commissionRate?: number;
   tax: number;
   total: number;
   method?: string;
@@ -77,6 +79,11 @@ const T = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const euro = (n: number): string => Number(n).toFixed(2) + " €";
+
+const percent = (n: number): string => {
+  const rounded = Number(n.toFixed(2));
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+};
 
 type LicenseTier = "BASIC" | "PREMIUM" | "EXCLUSIVE";
 
@@ -359,6 +366,13 @@ function drawTable(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): n
 // ─── 4. TOTAUX ────────────────────────────────────────────────────────────────
 function drawTotals(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): number {
   const TOP = startY + 18;
+  const commission = Number(invoice.payment.commission || 0);
+  const commissionRate =
+    typeof invoice.payment.commissionRate === "number"
+      ? Number(invoice.payment.commissionRate)
+      : invoice.payment.subtotal > 0
+        ? Number(((commission / invoice.payment.subtotal) * 100).toFixed(2))
+        : 0;
 
   // Alignement calé sur les colonnes du tableau
   // Label  : colonne PRIX U. (x = T.prix.x)
@@ -375,16 +389,24 @@ function drawTotals(doc: PDFKit.PDFDocument, invoice: Invoice, startY: number): 
 
   hr(doc, TOP + 17, C.fog, 0.8, LX);
 
+  // Commission
+  doc.fillColor(C.mist).font("Helvetica").fontSize(9)
+    .text(`Commission (${percent(commissionRate)}%)`, LX, TOP + 21, { lineBreak: false });
+  doc.fillColor(C.smoke).font("Helvetica").fontSize(9)
+    .text(euro(commission), VX, TOP + 21, { width: VW, align: "right", lineBreak: false });
+
+  hr(doc, TOP + 38, C.fog, 0.8, LX);
+
   // TVA
   doc.fillColor(C.mist).font("Helvetica").fontSize(9)
-    .text("TVA (20%)", LX, TOP + 21, { lineBreak: false });
+    .text("TVA (20%)", LX, TOP + 42, { lineBreak: false });
   doc.fillColor(C.smoke).font("Helvetica").fontSize(9)
-    .text(euro(invoice.payment.tax), VX, TOP + 21, { width: VW, align: "right", lineBreak: false });
+    .text(euro(invoice.payment.tax), VX, TOP + 42, { width: VW, align: "right", lineBreak: false });
 
-  hr(doc, TOP + 38, C.cloud, 0.8, LX);
+  hr(doc, TOP + 59, C.cloud, 0.8, LX);
 
   // Bloc TOTAL — commence à LX, finit exactement à PAGE_W - MR
-  const totalY = TOP + 44;
+  const totalY = TOP + 65;
   const totalH = 32;
   const rectX = LX - 8;
   const rectW = (PAGE_W - MR) - rectX;

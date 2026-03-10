@@ -30,7 +30,7 @@ const FAQ_CATEGORIES = [
     icon: Music,
     questions: [
       { q: "Comment devenir vendeur sur SUMVIBES ?", a: "Inscrivez-vous en tant que 'Compositeur / Vendeur', complétez votre profil et commencez à uploader vos beats. Chaque beat passe par une vérification qualité avant publication." },
-      { q: "Quelles sont les commissions de la plateforme ?", a: "SUMVIBES prélève une commission de 15% sur chaque vente. Vous conservez 85% de vos revenus. Les frais de paiement (Stripe/PayPal) sont inclus dans cette commission." },
+      { q: "Quelles sont les commissions de la plateforme ?", a: "SUMVIBES prélève une commission de 15% sur chaque vente. Vous conservez 85% de vos revenus. Les comission de paiement (Stripe/PayPal) sont inclus dans cette commission." },
       { q: "Comment retirer mes revenus ?", a: "Rendez-vous dans votre Dashboard Vendeur > Demandes de retrait. Le montant minimum est de 50€. Les virements sont traités sous 3 à 5 jours ouvrés." },
     ],
   },

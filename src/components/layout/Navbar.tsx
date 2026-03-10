@@ -33,7 +33,7 @@ export function Navbar() {
                 .catch(() => { });
         };
         fetchUnread();
-        const interval = setInterval(fetchUnread, 30000);
+        const interval = setInterval(fetchUnread, 40000);
         return () => clearInterval(interval);
     }, [user]);
 

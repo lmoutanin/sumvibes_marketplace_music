@@ -29,7 +29,7 @@ export default function CartPage() {
   const isStandard = plan === "STANDARD_MONTHLY" || plan === "STANDARD_YEARLY";
 
   // Calculate platform fee
-  const feeRate = isPremium ? 0 : isStandard ? 0.05 : 0.10;
+  const feeRate = isPremium ? 0 : isStandard ? 0.05 : 0.15;
   const platformFee = subtotal * feeRate;
 
   // Calculate tax (20% on subtotal + platform fee)
@@ -133,7 +133,7 @@ export default function CartPage() {
                       <span>{subtotal.toFixed(2)} €</span>
                     </div>
                     <div className="flex justify-between text-slate-300">
-                      <span>Frais de service ({feeRate * 100}%)</span>
+                      <span>comission de service ({feeRate * 100}%)</span>
                       {feeRate === 0 ? (
                         <span className="text-brand-gold font-bold">0.00 €</span>
                       ) : (

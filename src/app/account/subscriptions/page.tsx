@@ -53,7 +53,7 @@ export default function BuyerSubscriptionsPage() {
             if (res.ok) {
                 await refreshUser();
                 setSaved(true);
-                setTimeout(() => setSaved(false), 3000);
+                setTimeout(() => setSaved(false), 4000);
             } else {
                 setError(data.error || "Erreur lors de la souscription");
             }
@@ -150,7 +150,7 @@ export default function BuyerSubscriptionsPage() {
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-white shrink-0 opacity-50" />
-                                    <span><strong className="text-white">10%</strong> de frais de plateforme sur les achats</span>
+                                    <span><strong className="text-white">15%</strong> de comission de plateforme sur les achats</span>
                                 </div>
                             </div>
 
@@ -198,7 +198,7 @@ export default function BuyerSubscriptionsPage() {
                                 </div>
                                 <div className="flex items-start gap-3 p-2 rounded-lg bg-brand-gold/10 border border-brand-gold/20">
                                     <Check className="w-5 h-5 text-brand-gold shrink-0" />
-                                    <span><strong className="text-brand-gold text-base">0% de frais</strong> sur tous vos achats de licences</span>
+                                    <span><strong className="text-brand-gold text-base">0% de comission</strong> sur tous vos achats de licences</span>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-brand-gold shrink-0" />
