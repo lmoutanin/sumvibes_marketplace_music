@@ -438,6 +438,5 @@ export default function ForumPage() {
       )}
 
     </div>
-    </div >
   );
 }

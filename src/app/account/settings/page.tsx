@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
+import { resolveFileUrl } from "@/lib/resolve-file";
 import {
   Music,
   MapPin,
@@ -19,6 +20,7 @@ import {
   Eye,
   EyeOff,
   Camera,
+  PenTool,
   Globe,
   Mail,
   ChevronLeft,
@@ -27,6 +29,7 @@ import {
   Instagram,
   Twitter,
   Youtube,
+  X,
   CreditCard,
   Crown
 } from "lucide-react";
@@ -73,8 +76,120 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar ?? null);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(user?.sellerProfile?.signatureData ?? null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [signatureUploading, setSignatureUploading] = useState(false);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingRef = useRef(false);
+
+  useEffect(() => {
+    setSignaturePreview(user?.sellerProfile?.signatureData ?? null);
+  }, [user?.sellerProfile?.signatureData]);
+
+  const initSignatureCanvas = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+  };
+
+  useEffect(() => {
+    if (!showSignatureModal || user?.role !== "SELLER") return;
+    requestAnimationFrame(() => initSignatureCanvas());
+  }, [showSignatureModal, user?.role]);
+
+  const getCanvasCoords = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
+  };
+
+  const startDraw = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    drawingRef.current = true;
+    const { x, y } = getCanvasCoords(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx || !drawingRef.current) return;
+    e.preventDefault();
+    const { x, y } = getCanvasCoords(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDraw = (e?: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        // noop
+      }
+    }
+    drawingRef.current = false;
+  };
+
+  const clearSignatureCanvas = () => {
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const saveDrawnSignature = async () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    setSignatureUploading(true);
+    setError("");
+    try {
+      const signatureData = canvas.toDataURL("image/png");
+
+      const res = await fetch("/api/auth/signature-drawn", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ signatureData }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur lors de l'enregistrement de la signature");
+
+      setSignaturePreview(signatureData);
+      await refreshUser();
+      setShowSignatureModal(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      setError(err.message || "Erreur réseau lors de l'enregistrement de la signature");
+    } finally {
+      setSignatureUploading(false);
+    }
+  };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -140,6 +255,8 @@ export default function SettingsPage() {
     }
   };
 
+
+
   const tabs = [
     { id: "profile", label: "Profil", icon: User },
     { id: "security", label: "Sécurité", icon: Lock },
@@ -180,6 +297,31 @@ export default function SettingsPage() {
       data.description = formData.get("bio") as string;
       data.genres = formData.getAll("genres") as string[];
       data.paypalEmail = formData.get("paypalEmail") as string;
+
+      const requiredSellerFields = [
+        { label: "Prénom", value: data.firstName },
+        { label: "Nom", value: data.lastName },
+        { label: "Pseudo / Nom d'artiste", value: data.displayName },
+        { label: "Email", value: data.email },
+        { label: "Téléphone", value: data.phone },
+        { label: "Adresse", value: data.address },
+        { label: "Ville", value: data.city },
+        { label: "Code Postal", value: data.postalCode },
+      ];
+
+      const missingFields = requiredSellerFields
+        .filter((f) => !String(f.value ?? "").trim())
+        .map((f) => f.label);
+
+      if (!signaturePreview) {
+        missingFields.push("Signature manuscrite");
+      }
+
+      if (missingFields.length > 0) {
+        setError(`Merci de compléter les champs obligatoires : ${missingFields.join(", ")}.`);
+        setLoading(false);
+        return;
+      }
     }
 
     try {
@@ -456,6 +598,60 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+
+
+              {user?.role === "SELLER" && showSignatureModal && (
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="glass rounded-2xl w-full max-w-2xl p-6 border border-white/10">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold flex items-center gap-2">
+                        <PenTool className="w-5 h-5 text-brand-gold" /> Signature vendeur
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowSignatureModal(false)}
+                        className="p-2 rounded-full hover:bg-white/10"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <canvas
+                      ref={signatureCanvasRef}
+                      width={1000}
+                      height={260}
+                      className="w-full h-44 rounded-xl bg-white border border-white/10 cursor-crosshair touch-none"
+                      onPointerDown={startDraw}
+                      onPointerMove={draw}
+                      onPointerUp={stopDraw}
+                      onPointerLeave={stopDraw}
+                    />
+
+                    <div className="flex gap-3 mt-4 justify-end">
+                      <button
+                        type="button"
+                        onClick={clearSignatureCanvas}
+                        className="glass rounded-xl px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                      >
+                        Effacer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveDrawnSignature}
+                        disabled={signatureUploading}
+                        className="relative group px-5 py-2 rounded-full font-bold text-brand-purple overflow-hidden flex items-center gap-2 disabled:opacity-50 transition-all hover:scale-105 text-sm"
+                      >
+                        <div className="absolute inset-0 bg-brand-gold group-hover:bg-amber-400 transition-colors"></div>
+                        <span className="relative z-10 flex items-center gap-2">
+                          {signatureUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          Enregistrer
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* SECTION: INFORMATIONS DE BASE */}
               <div className="glass rounded-2xl p-6 mb-8">
                 <h3 className="text-lg font-bold font-display block mb-6 text-brand-gold">
@@ -469,6 +665,7 @@ export default function SettingsPage() {
                     <input
                       name="firstName"
                       type="text"
+                      required={user?.role === "SELLER"}
                       defaultValue={user.firstName ?? ""}
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50"
                     />
@@ -480,6 +677,7 @@ export default function SettingsPage() {
                     <input
                       name="lastName"
                       type="text"
+                      required={user?.role === "SELLER"}
                       defaultValue={user.lastName ?? ""}
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50"
                     />
@@ -491,6 +689,7 @@ export default function SettingsPage() {
                     <input
                       name="displayName"
                       type="text"
+                      required={user?.role === "SELLER"}
                       defaultValue={user.displayName ?? user.username}
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50"
                     />
@@ -502,12 +701,39 @@ export default function SettingsPage() {
                     <input
                       name="email"
                       type="email"
+                      required
                       defaultValue={user.email ?? ""}
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-brand-gold/50"
                     />
                   </div>
                 </div>
               </div>
+
+              {user?.role === "SELLER" && (
+                <div className="mb-8 p-6 glass rounded-2xl border border-brand-gold/20">
+                  <h3 className="font-bold text-lg">Signature manuscrite</h3>
+                  {signaturePreview ? (
+                    <div className="mt-4 rounded-xl bg-white border border-white/10 p-3 w-full max-w-sm">
+                      <img src={signaturePreview} alt="Signature enregistrée" className="w-full h-16 object-contain" />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 mt-2">Aucune signature enregistrée. Créez votre signature manuscrite qui sera intégrée dans vos contrats PDF.</p>
+                  )}
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowSignatureModal(true)}
+                      className="relative group px-5 py-2 rounded-full font-bold text-brand-purple overflow-hidden flex items-center gap-2 flex-shrink-0 transition-all hover:scale-105 text-sm"
+                    >
+                      <div className="absolute inset-0 bg-brand-gold group-hover:bg-amber-400 transition-colors"></div>
+                      <span className="relative z-10 flex items-center gap-2">
+                        <PenTool className="w-4 h-4" />
+                        {signaturePreview ? "Modifier" : "Créer ma signature"}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* SECTION: BOUTIQUE & LIENS */}
               <div className="glass rounded-2xl p-6 mb-8 border border-brand-gold/10">
@@ -598,6 +824,7 @@ export default function SettingsPage() {
                       <input
                         name="phone"
                         type="tel"
+                        required={user?.role === "SELLER"}
                         defaultValue={user.phone ?? ""}
                         placeholder="+33 6 12 34 56 78"
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold/50"
@@ -610,6 +837,7 @@ export default function SettingsPage() {
                       <input
                         name="address"
                         type="text"
+                        required={user?.role === "SELLER"}
                         defaultValue={user.address ?? ""}
                         placeholder="12 rue Exemple"
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold/50"
@@ -623,6 +851,7 @@ export default function SettingsPage() {
                         <input
                           name="city"
                           type="text"
+                          required={user?.role === "SELLER"}
                           defaultValue={user.city ?? ""}
                           placeholder="Paris"
                           className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold/50"
@@ -635,6 +864,7 @@ export default function SettingsPage() {
                         <input
                           name="postalCode"
                           type="text"
+                          required={user?.role === "SELLER"}
                           defaultValue={user.postalCode ?? ""}
                           placeholder="75000"
                           className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-gold/50"
@@ -727,8 +957,6 @@ export default function SettingsPage() {
               </div>
             </form>
           )}
-
-
 
           {/* Security Tab */}
           {activeTab === "security" && (

@@ -26,6 +26,7 @@ const MAX_SIZES: Record<FileCategory, number> = {
     stems: 500 * 1024 * 1024, // 500 MB (ZIP trackout)
     cover: 5 * 1024 * 1024,   //   5 MB
     avatar: 5 * 1024 * 1024,  //   5 MB
+    signature: 5 * 1024 * 1024, // 5 MB
 };
 
 // ─── POST /api/presign ─────────────────────────────────────────────────────────

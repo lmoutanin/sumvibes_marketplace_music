@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 
+function hasText(value: unknown) {
+  return String(value ?? "").trim().length > 0;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const token = req.headers.get("authorization")?.split(" ")[1];
@@ -48,6 +52,8 @@ export async function GET(req: NextRequest) {
             description: true,
             genres: true,
             paypalEmail: true,
+            signatureUrl: true,
+            signatureData: true,
             totalSales: true,
             totalRevenue: true,
             averageRating: true,
@@ -102,7 +108,7 @@ export async function PUT(req: NextRequest) {
     const {
       firstName, lastName, displayName, email, bio, website, phone, instagram, twitter, youtube, country, address, city, postalCode,
       twoFactorEnabled, notificationPrefs, musicPrefs,
-      artistName, description, genres, paypalEmail
+      artistName, description, genres, paypalEmail, signatureUrl, signatureData
     } = body;
 
     const prisma = (await import("@/lib/prisma")).default;
@@ -110,11 +116,82 @@ export async function PUT(req: NextRequest) {
     // Check user role
     const existingUser = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { role: true }
+      select: {
+        role: true,
+        firstName: true,
+        lastName: true,
+        displayName: true,
+        email: true,
+        phone: true,
+        address: true,
+        city: true,
+        postalCode: true,
+        sellerProfile: {
+          select: {
+            signatureData: true,
+          },
+        },
+      }
     });
 
     if (!existingUser) {
       return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    }
+
+    const profileKeys = [
+      "firstName",
+      "lastName",
+      "displayName",
+      "email",
+      "phone",
+      "address",
+      "city",
+      "postalCode",
+      "artistName",
+      "description",
+      "genres",
+      "paypalEmail",
+      "signatureData",
+      "signatureUrl",
+    ];
+
+    const isProfileUpdate = profileKeys.some((k) =>
+      Object.prototype.hasOwnProperty.call(body, k),
+    );
+
+    if (existingUser.role === "SELLER" && isProfileUpdate) {
+      const finalFirstName = Object.prototype.hasOwnProperty.call(body, "firstName") ? firstName : existingUser.firstName;
+      const finalLastName = Object.prototype.hasOwnProperty.call(body, "lastName") ? lastName : existingUser.lastName;
+      const finalDisplayName = Object.prototype.hasOwnProperty.call(body, "displayName") ? displayName : existingUser.displayName;
+      const finalEmail = Object.prototype.hasOwnProperty.call(body, "email") ? email : existingUser.email;
+      const finalPhone = Object.prototype.hasOwnProperty.call(body, "phone") ? phone : existingUser.phone;
+      const finalAddress = Object.prototype.hasOwnProperty.call(body, "address") ? address : existingUser.address;
+      const finalCity = Object.prototype.hasOwnProperty.call(body, "city") ? city : existingUser.city;
+      const finalPostalCode = Object.prototype.hasOwnProperty.call(body, "postalCode") ? postalCode : existingUser.postalCode;
+      const finalSignatureData = Object.prototype.hasOwnProperty.call(body, "signatureData")
+        ? signatureData
+        : existingUser.sellerProfile?.signatureData;
+
+      const missing: string[] = [];
+      if (!hasText(finalFirstName)) missing.push("firstName");
+      if (!hasText(finalLastName)) missing.push("lastName");
+      if (!hasText(finalDisplayName)) missing.push("displayName");
+      if (!hasText(finalEmail)) missing.push("email");
+      if (!hasText(finalPhone)) missing.push("phone");
+      if (!hasText(finalAddress)) missing.push("address");
+      if (!hasText(finalCity)) missing.push("city");
+      if (!hasText(finalPostalCode)) missing.push("postalCode");
+      if (!hasText(finalSignatureData)) missing.push("signatureData");
+
+      if (missing.length > 0) {
+        return NextResponse.json(
+          {
+            error: "Champs obligatoires manquants pour un beatmaker.",
+            missing,
+          },
+          { status: 400 },
+        );
+      }
     }
 
     // Mise à jour de l'utilisateur
@@ -183,6 +260,8 @@ export async function PUT(req: NextRequest) {
           description,
           genres: genres || [],
           paypalEmail,
+          ...(signatureUrl !== undefined && { signatureUrl }),
+          ...(signatureData !== undefined && { signatureData }),
         },
         create: {
           userId: decoded.userId,
@@ -190,12 +269,16 @@ export async function PUT(req: NextRequest) {
           description,
           genres: genres || [],
           paypalEmail,
+          ...(signatureUrl !== undefined && { signatureUrl }),
+          ...(signatureData !== undefined && { signatureData }),
         },
         select: {
           artistName: true,
           description: true,
           genres: true,
           paypalEmail: true,
+          signatureUrl: true,
+          signatureData: true,
           totalSales: true,
           totalRevenue: true,
           averageRating: true,

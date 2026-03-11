@@ -30,6 +30,10 @@ function toInt(value: unknown): number | null {
   return isNaN(n) ? null : n;
 }
 
+function hasValue(value: unknown): boolean {
+  return String(value ?? "").trim().length > 0;
+}
+
 // ─── GET /api/beats ───────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
   try {
@@ -178,12 +182,60 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { role: true, subscription: { select: { plan: true } } },
+      select: {
+        role: true,
+        firstName: true,
+        lastName: true,
+        displayName: true,
+        email: true,
+        phone: true,
+        address: true,
+        city: true,
+        postalCode: true,
+        subscription: { select: { plan: true } },
+        sellerProfile: { select: { signatureData: true } },
+      },
     });
 
     if (!user || user.role !== "SELLER") {
       return NextResponse.json(
         { error: "Seuls les vendeurs peuvent créer des beats" },
+        { status: 403 },
+      );
+    }
+
+    const missingBaseFields: string[] = [];
+    const missingContactFields: string[] = [];
+    if (!hasValue(user.firstName)) missingBaseFields.push("firstName");
+    if (!hasValue(user.lastName)) missingBaseFields.push("lastName");
+    if (!hasValue(user.displayName)) missingBaseFields.push("displayName");
+    if (!hasValue(user.email)) missingBaseFields.push("email");
+
+    if (!hasValue(user.phone)) missingContactFields.push("phone");
+    if (!hasValue(user.address)) missingContactFields.push("address");
+    if (!hasValue(user.city)) missingContactFields.push("city");
+    if (!hasValue(user.postalCode)) missingContactFields.push("postalCode");
+
+    const hasSignature = hasValue(user.sellerProfile?.signatureData);
+
+    const missingSections: string[] = [];
+    if (missingBaseFields.length > 0) missingSections.push("Informations de base");
+    if (missingContactFields.length > 0) missingSections.push("Coordonnées");
+    if (!hasSignature) missingSections.push("Signature manuscrite");
+
+    if (missingSections.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Profil vendeur incomplet. Complétez Informations de base, Coordonnées et Signature manuscrite dans /account/settings avant d'uploader un beat.",
+          missingSections,
+          missingFields: {
+            base: missingBaseFields,
+            contact: missingContactFields,
+            signature: hasSignature ? [] : ["signatureData"],
+          },
+          settingsUrl: "/account/settings?tab=profile",
+        },
         { status: 403 },
       );
     }

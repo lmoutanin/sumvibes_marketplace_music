@@ -42,6 +42,10 @@ interface InvoiceData {
   payment:  InvoicePayment;
 }
 
+interface InvoiceEmailOptions {
+  includeContract?: boolean;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function esc(t: string): string {
   return t.replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c] ?? c));
@@ -50,8 +54,9 @@ function esc(t: string): string {
 const euro = (n: number): string => `${Number(n).toFixed(2)}&nbsp;€`;
 
 // ─────────────────────────────────────────────────────────────────────────────
-export function generateInvoiceEmailHtml(data: InvoiceData): string {
+export function generateInvoiceEmailHtml(data: InvoiceData, options: InvoiceEmailOptions = {}): string {
   const { shipping, items, payment } = data;
+  const { includeContract = false } = options;
   const commission = Number(payment.commission || 0);
   const date        = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
   const year        = new Date().getFullYear();
@@ -124,7 +129,7 @@ export function generateInvoiceEmailHtml(data: InvoiceData): string {
             </div>
             <div style="color:${B.textSecond};font-size:14px;line-height:1.7;">
               Bonjour <strong style="color:${B.gold};">${firstName}</strong>, merci pour votre achat&nbsp;!<br/>
-              Votre facture est en pièce jointe et vos fichiers sont prêts.
+              ${includeContract ? "Votre document d'achat (facture + contrat de licence)" : "Votre facture"} est en pièce jointe et vos fichiers sont prêts.
             </div>
           </td>
           <td width="100" style="text-align:right;vertical-align:top;">
@@ -236,7 +241,7 @@ export function generateInvoiceEmailHtml(data: InvoiceData): string {
         <tr>
           <td style="background:${B.darkCard};border-left:3px solid ${B.gold};border-radius:0 8px 8px 0;padding:16px 20px;">
             <span style="color:${B.textSecond};font-size:13px;line-height:1.7;">
-              📎 Votre facture PDF est jointe à cet email. Vos fichiers sont accessibles dans votre espace
+              📎 ${includeContract ? "Votre document PDF (facture + contrat de licence) est joint" : "Votre facture PDF est jointe"} à cet email. Vos fichiers sont accessibles dans votre espace
               <strong style="color:${B.gold};">Téléchargements</strong>.
               Pour toute question, <a href="mailto:contact@sumvibes.com" style="color:${B.gold};font-weight:700;">contactez-nous</a>.
             </span>

@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   TrendingUp, DollarSign, Music, Eye, ShoppingCart, Users,
   ArrowUp, ArrowDown, BarChart3, Upload, CreditCard, FileText,
-  ArrowRight, Clock, Star, Loader2, Briefcase, Settings, Crown, Zap
+  ArrowRight, Clock, Star, Loader2, Briefcase, Settings, Crown, Zap, AlertTriangle
 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
@@ -130,6 +130,31 @@ export default function SellerDashboardPage() {
     ? new Date(user.subscription.currentPeriodEnd).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
     : null;
 
+  const baseChecks = [
+    { label: "Prénom", ok: Boolean(String(user.firstName ?? "").trim()) },
+    { label: "Nom", ok: Boolean(String(user.lastName ?? "").trim()) },
+    { label: "Pseudo / Nom d'artiste", ok: Boolean(String(user.displayName ?? "").trim()) },
+    { label: "Email", ok: Boolean(String(user.email ?? "").trim()) },
+  ];
+  const contactChecks = [
+    { label: "Téléphone", ok: Boolean(String(user.phone ?? "").trim()) },
+    { label: "Adresse", ok: Boolean(String(user.address ?? "").trim()) },
+    { label: "Ville", ok: Boolean(String(user.city ?? "").trim()) },
+    { label: "Code postal", ok: Boolean(String(user.postalCode ?? "").trim()) },
+  ];
+  const signatureCheck = { label: "Signature manuscrite", ok: Boolean(String(user.sellerProfile?.signatureData ?? "").trim()) };
+
+  const sections = [
+    { label: "Informations de base", ok: baseChecks.every((c) => c.ok) },
+    { label: "Coordonnées", ok: contactChecks.every((c) => c.ok) },
+    { label: "Signature manuscrite", ok: signatureCheck.ok },
+  ];
+
+  const completedSections = sections.filter((s) => s.ok).length;
+  const completionPercent = Math.round((completedSections / sections.length) * 100);
+  const missingSections = sections.filter((s) => !s.ok).map((s) => s.label);
+  const canUploadBeats = completedSections === sections.length;
+
   return (
     <div className="relative min-h-screen bg-gradient-premium">
       <Navbar />
@@ -160,6 +185,42 @@ export default function SellerDashboardPage() {
               </Link>
             </div>
           </div>
+
+          {!canUploadBeats && (
+            <div className="glass rounded-3xl p-6 mb-8 border border-brand-gold/30">
+              <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="mt-1 text-brand-gold">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="font-bold text-lg">Pré-requis contrat de licence</h2>
+                    <p className="text-sm text-slate-300 mt-1">
+                      Progression du profil vendeur : <span className="font-bold text-brand-gold">{completedSections}/{sections.length}</span> sections complètes ({completionPercent}%).
+                    </p>
+                    <p className="text-xs text-slate-400 mt-2">
+                      À compléter avant upload de beat : {missingSections.join(", ")}.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Link
+                    href="/account/settings?tab=profile"
+                    className="px-5 py-2.5 rounded-full bg-brand-gold text-brand-purple font-bold hover:scale-105 transition-transform"
+                  >
+                    Compléter mon profil
+                  </Link>
+                  <Link
+                    href="/seller/beats"
+                    className="px-5 py-2.5 rounded-full glass border border-white/15 font-semibold hover:bg-white/10"
+                  >
+                    Aller à l'upload
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
 
 

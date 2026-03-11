@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
-import { CheckCircle, Download, FileText, Music, ArrowRight, Mail, Loader2 } from "lucide-react";
+import { CheckCircle, Download, FileText, Music, ArrowRight, Mail, Loader2, FileCheck } from "lucide-react";
 
 interface Purchase {
   id: string;
@@ -18,6 +18,36 @@ interface Purchase {
 export default function CheckoutConfirmationPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingContract, setDownloadingContract] = useState<string | null>(null);
+
+  const downloadMergedDocument = async (purchaseId: string, invoiceNumber: string) => {
+    try {
+      setDownloadingContract(purchaseId);
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/purchase-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ purchaseId }),
+      });
+
+      if (!res.ok) throw new Error("Erreur lors du téléchargement du document");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Facture-et-Contrat-${invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      console.error("Erreur:", err);
+      alert("Erreur lors du téléchargement du document");
+    } finally {
+      setDownloadingContract(null);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -102,11 +132,23 @@ export default function CheckoutConfirmationPage() {
                         Prod. by {item.beat.seller.sellerProfile?.artistName || "Inconnu"} — Licence {item.license.type}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-col sm:flex-row">
                       <Link href="/account/downloads" className="glass rounded-xl px-4 py-2 text-sm font-semibold hover:bg-brand-gold/20 hover:text-brand-gold flex items-center gap-2">
                         <Download className="w-4 h-4" />
-                        Télécharger
+                        Fichiers
                       </Link>
+                      <button
+                        onClick={() => downloadMergedDocument(item.id, item.invoiceNumber)}
+                        disabled={downloadingContract === item.id}
+                        className="glass rounded-xl px-4 py-2 text-sm font-semibold hover:bg-brand-gold/20 hover:text-brand-gold flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {downloadingContract === item.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <FileCheck className="w-4 h-4" />
+                        )}
+                        Document
+                      </button>
                     </div>
                   </div>
                 ))
@@ -115,21 +157,33 @@ export default function CheckoutConfirmationPage() {
           </div>
 
           {/* Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
             <Link href="/account/downloads" className="glass rounded-2xl p-6 hover:scale-105 flex flex-col items-center gap-3 group">
               <Download className="w-8 h-8 text-brand-gold group-hover:scale-110" />
-              <span className="font-bold">Tout télécharger</span>
-              <span className="text-xs text-slate-400">Fichiers + Licences</span>
+              <span className="font-bold">Fichiers</span>
+              <span className="text-xs text-slate-400">Beats + Stems</span>
             </Link>
-            <div className="glass rounded-2xl p-6 flex flex-col items-center gap-3">
-              <FileText className="w-8 h-8 text-brand-gold" />
-              <span className="font-bold">Facture PDF</span>
-              <span className="text-xs text-slate-400">{invoiceNumber}</span>
-            </div>
+            <button
+              onClick={() => {
+                if (purchases.length > 0) {
+                  downloadMergedDocument(purchases[0].id, purchases[0].invoiceNumber);
+                }
+              }}
+              disabled={purchases.length === 0 || downloadingContract !== null}
+              className="glass rounded-2xl p-6 hover:scale-105 flex flex-col items-center gap-3 group disabled:opacity-50 disabled:hover:scale-100"
+            >
+              {downloadingContract ? (
+                <Loader2 className="w-8 h-8 text-brand-gold animate-spin" />
+              ) : (
+                <FileText className="w-8 h-8 text-brand-gold group-hover:scale-110" />
+              )}
+              <span className="font-bold">Document</span>
+              <span className="text-xs text-slate-400">Facture + Contrat</span>
+            </button>
             <div className="glass rounded-2xl p-6 flex flex-col items-center gap-3">
               <Mail className="w-8 h-8 text-brand-gold" />
-              <span className="font-bold">Email envoyé</span>
-              <span className="text-xs text-slate-400">Vérifiez votre boîte</span>
+              <span className="font-bold">Email</span>
+              <span className="text-xs text-slate-400">Confirmé</span>
             </div>
           </div>
 

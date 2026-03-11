@@ -126,6 +126,8 @@ model SellerProfile {
   // Payment Info
   stripeAccountId String?
   paypalEmail     String?
+  signatureUrl    String?
+  signatureData   String? @db.Text
 
   // Commission
   commissionRate Decimal @default(15) @db.Decimal(5, 2) // Platform commission %
@@ -359,6 +361,10 @@ model Purchase {
   invoiceNumber  String
   invoicePdfUrl  String?
   contractPdfUrl String?
+
+  // Contract Acceptance (Signature Électronique)
+  contractAcceptedAt DateTime?
+  contractAcceptedIp String?
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

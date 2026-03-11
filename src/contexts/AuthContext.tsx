@@ -36,6 +36,8 @@ interface User {
     description: string | null;
     genres: string[];
     paypalEmail?: string | null;
+    signatureUrl?: string | null;
+    signatureData?: string | null;
     totalSales: number;
     totalRevenue: number | string;
     averageRating: number | string | null;

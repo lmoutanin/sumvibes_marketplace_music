@@ -9,6 +9,10 @@ function getFeeRateFromPlan(plan?: string | null): number {
   return 0.15;
 }
 
+function hasValue(value: unknown): boolean {
+  return String(value ?? "").trim().length > 0;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get("authorization")?.split(" ")[1];
@@ -72,6 +76,21 @@ export async function POST(req: NextRequest) {
           },
         },
       });
+
+      const missingBuyerFields: string[] = [];
+      if (!hasValue(invoiceUser?.firstName)) missingBuyerFields.push("firstName");
+      if (!hasValue(invoiceUser?.lastName)) missingBuyerFields.push("lastName");
+      if (!hasValue(invoiceUser?.displayName)) missingBuyerFields.push("displayName");
+      if (!hasValue(invoiceUser?.email)) missingBuyerFields.push("email");
+      if (!hasValue(invoiceUser?.phone)) missingBuyerFields.push("phone");
+      if (!hasValue(invoiceUser?.address)) missingBuyerFields.push("address");
+      if (!hasValue(invoiceUser?.city)) missingBuyerFields.push("city");
+      if (!hasValue(invoiceUser?.postalCode)) missingBuyerFields.push("postalCode");
+      if (!hasValue(invoiceUser?.country)) missingBuyerFields.push("country");
+
+      if (missingBuyerFields.length > 0) {
+        throw new Error(`PROFILE_INCOMPLETE:${missingBuyerFields.join(",")}`);
+      }
 
       const buyerPlan = invoiceUser?.subscription?.plan ?? "FREEMIUM";
       const feeRate = getFeeRateFromPlan(buyerPlan);
@@ -214,7 +233,13 @@ export async function POST(req: NextRequest) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ shipping, items: invoiceItems, payment }),
+        body: JSON.stringify({
+          shipping,
+          items: invoiceItems,
+          payment,
+          purchaseIds: purchases.map((purchase: any) => purchase.id),
+          includeContracts: true,
+        }),
       });
 
       console.log("Invoice sent:", sharedInvoiceNumber, invoiceItems.length, "items");
@@ -224,6 +249,17 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Error in POST /api/purchases:", error);
     const message = error instanceof Error ? error.message : "Erreur serveur";
+    if (message.startsWith("PROFILE_INCOMPLETE:")) {
+      const missingFields = message.replace("PROFILE_INCOMPLETE:", "").split(",").filter(Boolean);
+      return NextResponse.json(
+        {
+          error: "Profil incomplet: merci de compléter vos informations avant d'acheter.",
+          missingFields,
+          settingsUrl: "/account/settings?tab=profile",
+        },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

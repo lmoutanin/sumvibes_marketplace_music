@@ -18,6 +18,23 @@ export default function CheckoutPage() {
   const items = cart?.items ?? [];
   const subtotal = cart?.total ?? 0;
 
+  const requiredProfileFields = [
+    { key: "firstName", label: "Prénom", value: user?.firstName },
+    { key: "lastName", label: "Nom", value: user?.lastName },
+    { key: "displayName", label: "Pseudo", value: user?.displayName },
+    { key: "email", label: "Email", value: user?.email },
+    { key: "phone", label: "Téléphone", value: user?.phone },
+    { key: "address", label: "Adresse", value: user?.address },
+    { key: "city", label: "Ville", value: user?.city },
+    { key: "postalCode", label: "Code postal", value: user?.postalCode },
+    { key: "country", label: "Pays", value: user?.country },
+  ];
+
+  const missingProfileFields = requiredProfileFields
+    .filter((f) => !String(f.value ?? "").trim())
+    .map((f) => f.label);
+  const isProfileCompleteForPurchase = missingProfileFields.length === 0;
+
   // Calcul des comission selon l'abonnement
   const plan = user?.subscription?.plan || "FREEMIUM";
   const isPremium = plan === "PREMIUM_MONTHLY" || plan === "PREMIUM_YEARLY";
@@ -32,6 +49,10 @@ export default function CheckoutPage() {
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
+    if (!isProfileCompleteForPurchase) {
+      setError(`Merci de compléter votre profil avant achat : ${missingProfileFields.join(", ")}.`);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -112,6 +133,24 @@ export default function CheckoutPage() {
             </div>
           )}
 
+          {!isProfileCompleteForPurchase && (
+            <div className="glass rounded-xl p-4 border border-brand-gold/30 text-brand-gold flex items-start justify-between gap-4 mb-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p className="text-sm">
+                  Complétez votre profil pour acheter : {missingProfileFields.join(", ")}.
+                </p>
+              </div>
+              <Link
+                href="/account/settings?tab=profile"
+                className="relative group px-5 py-2 rounded-full font-bold text-brand-purple overflow-hidden flex items-center gap-2 flex-shrink-0 transition-all hover:scale-105 text-sm whitespace-nowrap"
+              >
+                <div className="absolute inset-0 bg-brand-gold group-hover:bg-amber-400 transition-colors"></div>
+                <span className="relative z-10">Compléter mon profil</span>
+              </Link>
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-5 gap-8">
             {/* Payment Form */}
             <div className="lg:col-span-3">
@@ -153,7 +192,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <button type="submit" disabled={loading}
+                <button type="submit" disabled={loading || !isProfileCompleteForPurchase}
                   className="w-full btn-primary rounded-xl bg-gradient-to-r from-brand-gold to-brand-gold-dark py-5 font-bold text-black text-lg hover:shadow-brand-gold/50 hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50">
                   {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Lock className="w-5 h-5" /> Payer {total.toFixed(2)} €</>}
                 </button>

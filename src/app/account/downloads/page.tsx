@@ -10,6 +10,7 @@ interface Purchase {
   id: string;
   amount: number;
   createdAt: string;
+  invoiceNumber: string;
   beat: {
     id: string; title: string; slug: string;
     genre: string[]; bpm: number; key: string | null; coverImage: string | null;
@@ -28,6 +29,42 @@ export default function DownloadsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [licenseFilter, setLicenseFilter] = useState("all");
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<string | null>(null);
+
+  const downloadPurchaseDocument = async (purchaseId: string, invoiceNumber: string) => {
+    try {
+      setDownloadingDocumentId(purchaseId);
+
+      const response = await fetch("/api/purchase-document", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ purchaseId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur lors du téléchargement du document");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Facture-et-Contrat-${invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Erreur téléchargement document:", error);
+      alert(error instanceof Error ? error.message : "Erreur lors du téléchargement du document");
+    } finally {
+      setDownloadingDocumentId(null);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -176,8 +213,18 @@ export default function DownloadsPage() {
                         <Link href={`/product/${item.beat.slug}`} className="flex-1 glass bg-white/5 hover:bg-white/10 p-2.5 rounded-xl flex items-center justify-center transition-colors text-slate-300 hover:text-white border border-white/10" title="Voir le beat">
                           <ExternalLink className="w-4 h-4" />
                         </Link>
-                        <button className="flex-1 glass bg-white/5 hover:bg-white/10 p-2.5 rounded-xl flex items-center justify-center transition-colors text-slate-300 hover:text-white border border-white/10" title="Contrat de licence">
-                          <FileText className="w-4 h-4" />
+                        <button
+                          type="button"
+                          onClick={() => downloadPurchaseDocument(item.id, item.invoiceNumber)}
+                          disabled={downloadingDocumentId === item.id}
+                          className="flex-1 glass bg-white/5 hover:bg-white/10 p-2.5 rounded-xl flex items-center justify-center transition-colors text-slate-300 hover:text-white border border-white/10 disabled:opacity-50"
+                          title="Contrat de licence"
+                        >
+                          {downloadingDocumentId === item.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <FileText className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>

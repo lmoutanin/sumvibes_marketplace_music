@@ -165,7 +165,7 @@ function Chip({
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function SellerBeatsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const isFreemium = !user?.subscription?.plan || user.subscription.plan === "FREEMIUM";
@@ -183,6 +183,36 @@ export default function SellerBeatsPage() {
   const coverRef = useRef<HTMLInputElement>(null);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [uploadStatus, setUploadStatus] = useState("");
+
+  const requiredBaseFields = [
+    { label: "Prénom", value: user?.firstName },
+    { label: "Nom", value: user?.lastName },
+    { label: "Pseudo / Nom d'artiste", value: user?.displayName },
+    { label: "Email", value: user?.email },
+  ];
+
+  const requiredContactFields = [
+    { label: "Téléphone", value: user?.phone },
+    { label: "Adresse", value: user?.address },
+    { label: "Ville", value: user?.city },
+    { label: "Code postal", value: user?.postalCode },
+  ];
+
+  const missingBaseFields = requiredBaseFields
+    .filter((f) => !String(f.value ?? "").trim())
+    .map((f) => f.label);
+
+  const missingContactFields = requiredContactFields
+    .filter((f) => !String(f.value ?? "").trim())
+    .map((f) => f.label);
+
+  const hasSignature = Boolean(String(user?.sellerProfile?.signatureData ?? "").trim());
+  const missingSections: string[] = [];
+  if (missingBaseFields.length > 0) missingSections.push("Informations de base");
+  if (missingContactFields.length > 0) missingSections.push("Coordonnées");
+  if (!hasSignature) missingSections.push("Signature manuscrite");
+
+  const isSellerProfileComplete = missingSections.length === 0;
 
   // ✅ Toujours utiliser goToStep pour naviguer — met à jour step ET stepRef ensemble
   const goToStep = (s: number) => {
@@ -375,6 +405,85 @@ export default function SellerBeatsPage() {
 
   const progress = ((step - 1) / (STEPS.length - 1)) * 100;
   const currentStep = STEPS[step - 1];
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-premium">
+        <Navbar />
+        <main className="pt-28 pb-16 px-4">
+          <div className="mx-auto max-w-xl glass rounded-3xl border border-white/10 p-8 text-center">
+            <p className="text-slate-300">Chargement du profil...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== "SELLER") {
+    return (
+      <div className="min-h-screen bg-gradient-premium">
+        <Navbar />
+        <main className="pt-28 pb-16 px-4">
+          <div className="mx-auto max-w-xl glass rounded-3xl border border-red-500/30 p-8 text-center">
+            <h1 className="text-2xl font-bold mb-3">Accès refusé</h1>
+            <p className="text-slate-300 mb-6">Seuls les vendeurs peuvent accéder à l'upload de beats.</p>
+            <Link href="/account" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-gold text-brand-purple font-bold hover:scale-105 transition-transform">
+              Retour au compte
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!isSellerProfileComplete) {
+    return (
+      <div className="min-h-screen bg-gradient-premium">
+        <Navbar />
+        <main className="pt-28 pb-16 px-4">
+          <div className="mx-auto max-w-2xl glass rounded-3xl border border-brand-gold/30 p-8">
+            <h1 className="text-2xl font-bold mb-2">Profil vendeur incomplet</h1>
+            <p className="text-slate-300 mb-4">
+              Pour accéder à l'upload de beats, vous devez compléter toutes les informations requises dans les paramètres.
+            </p>
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-4 mb-6">
+              <p className="text-sm font-semibold text-brand-gold mb-2">Sections manquantes :</p>
+              <ul className="list-disc pl-5 text-sm text-slate-200 space-y-1">
+                {missingSections.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ul>
+              {missingBaseFields.length > 0 && (
+                <p className="text-xs text-slate-400 mt-3">
+                  Informations de base manquantes : {missingBaseFields.join(", ")}
+                </p>
+              )}
+              {missingContactFields.length > 0 && (
+                <p className="text-xs text-slate-400 mt-1">
+                  Coordonnées manquantes : {missingContactFields.join(", ")}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/account/settings?tab=profile"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-gold text-brand-purple font-bold hover:scale-105 transition-transform"
+              >
+                Compléter mon profil
+              </Link>
+              <Link
+                href="/seller/dashboard"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass border border-white/15 text-white hover:bg-white/10"
+              >
+                Retour dashboard
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const handleNextStep = () => {
     setError("");

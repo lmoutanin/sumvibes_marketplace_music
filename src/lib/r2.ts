@@ -20,13 +20,14 @@ const BUCKET = process.env.R2_BUCKET_NAME?.trim()!;
 
 // ─── Key Builders ──────────────────────────────────────────────────────────────
 
-export type FileCategory = "audio" | "cover" | "avatar" | "stems";
+export type FileCategory = "audio" | "cover" | "avatar" | "signature" | "stems";
 
 /**
  * Génère la key R2 selon la catégorie.
  * - beats/[userId]/[timestamp]-[filename]
  * - images/covers/[userId]/[timestamp]-[filename]
  * - images/avatars/[userId]/[timestamp]-[filename]
+ * - images/signatures/[userId]/[timestamp]-[filename]
  */
 export function buildR2Key(
     category: FileCategory,
@@ -44,6 +45,8 @@ export function buildR2Key(
             return `images/covers/${userId}/${timestamp}-${sanitized}`;
         case "avatar":
             return `images/avatars/${userId}/${timestamp}-${sanitized}`;
+        case "signature":
+            return `images/signatures/${userId}/${timestamp}-${sanitized}`;
     }
 }
 
