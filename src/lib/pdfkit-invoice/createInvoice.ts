@@ -5,7 +5,7 @@ import PDFDocumentLib from "pdfkit";
 const PDFDocument = (PDFDocumentLib as any).default || PDFDocumentLib;
 
 // ─── INFO VENDEUR ─────────────────────────────────────────────────────────────────
-const SELLER = {
+export const SELLER = {
   name: "BE GREAT",
   siret: "93238647700016",
   tva_number: "FR28932386477",

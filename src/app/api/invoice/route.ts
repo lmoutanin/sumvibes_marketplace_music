@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { userSchema, itemSchema, invoiceSchema } from "./schema/invoiceModel";
-import { createInvoiceBuffer } from "@/lib/pdfkit-invoice/createInvoice";
+import { createInvoiceBuffer, SELLER } from "@/lib/pdfkit-invoice/createInvoice";
 import { ContractData, LicenseType as ContractLicenseType } from "@/lib/pdfkit-invoice/createContract";
 import { createMergedPurchaseDocumentBuffer } from "@/lib/pdfkit-invoice/createMergedDocument";
 import { sendInvoiceEmail } from "@/lib/resend";
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
         await invoiceSchema.validateAsync(payment);
 
-        const data = { shipping, items, payment };
+        const data = { shipping, items, payment, seller: SELLER };
 
         let pdfBuffer = await createInvoiceBuffer(data);
         let attachmentBaseName = payment.invoice_nr;
