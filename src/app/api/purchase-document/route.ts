@@ -98,6 +98,11 @@ export async function POST(req: NextRequest) {
             seller: {
               select: {
                 email: true,
+                displayName: true,
+                address: true,
+                city: true,
+                country: true,
+                postalCode: true,
                 sellerProfile: {
                   select: { artistName: true, signatureData: true, signatureUrl: true },
                 },
@@ -155,6 +160,13 @@ export async function POST(req: NextRequest) {
         ),
         quantity: 1,
       })),
+      seller: {
+        name: firstPurchase.beat.seller.displayName || "SUMVIBES",
+        email: firstPurchase.beat.seller.email || "email non fourni",
+        address: firstPurchase.beat.seller.address || "Adresse non fournie",
+        city: firstPurchase.beat.seller.city || "Ville non fournie",
+        country: firstPurchase.beat.seller.country || "France",
+      }
     };
 
     const contractDocuments: ContractData[] = [];

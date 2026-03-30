@@ -80,7 +80,6 @@ export async function POST(req: NextRequest) {
       const missingBuyerFields: string[] = [];
       if (!hasValue(invoiceUser?.firstName)) missingBuyerFields.push("firstName");
       if (!hasValue(invoiceUser?.lastName)) missingBuyerFields.push("lastName");
-      if (!hasValue(invoiceUser?.displayName)) missingBuyerFields.push("displayName");
       if (!hasValue(invoiceUser?.email)) missingBuyerFields.push("email");
       if (!hasValue(invoiceUser?.phone)) missingBuyerFields.push("phone");
       if (!hasValue(invoiceUser?.address)) missingBuyerFields.push("address");

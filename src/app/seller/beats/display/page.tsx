@@ -1029,6 +1029,7 @@ export default function SellerBeatsPage() {
   const [filter, setFilter] = useState("ALL");
   const [token, setToken] = useState("");
   const [editingBeat, setEditingBeat] = useState<Beat | null>(null);
+  const [beatPublished, setBeatPublished] = useState<number>(0);
   // Suppression d'un beat
   const handleDelete = async (beat: Beat) => {
     if (
@@ -1079,6 +1080,8 @@ export default function SellerBeatsPage() {
       }
     })();
   }, []);
+
+ 
 
   const handleSaved = (updated: Beat) => {
     setBeats((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));

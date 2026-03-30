@@ -9,10 +9,8 @@ interface Producer {
   rating?: number;
   isVerified: boolean;
   createdAt: string;
-  _count?: {
-    beats: number;
-    sales: number;
-  };
+  totalSales?: number;
+  totalBeats?: number;
   genres?: string[];
   user: {
     id: string;

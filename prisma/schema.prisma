@@ -119,6 +119,7 @@ model SellerProfile {
 
   // Stats
   totalSales    Int      @default(0)
+  totalBeats    Int      @default(0)
   totalRevenue  Decimal  @default(0) @db.Decimal(10, 2)
   averageRating Decimal? @db.Decimal(3, 2)
   totalReviews  Int      @default(0)
@@ -233,6 +234,7 @@ model Beat {
   // Status
   status   BeatStatus @default(DRAFT)
   featured Boolean    @default(false)
+  hasBeenPublished Boolean  @default(false)
 
   // SEO
   seoTitle       String?

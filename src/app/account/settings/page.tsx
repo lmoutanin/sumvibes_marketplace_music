@@ -878,14 +878,14 @@ export default function SettingsPage() {
                       <select
                         name="country"
                         className="w-full text-white focus:outline-none"
-                        defaultValue={(user as any).country ?? "FR"}
+                        defaultValue={(user as any).country ?? "FRANCE"}
                       >
-                        <option value="FR">France</option>
-                        <option value="BE">Belgique</option>
-                        <option value="CH">Suisse</option>
-                        <option value="CA">Canada</option>
-                        <option value="SN">Sénégal</option>
-                        <option value="CI">Côte d&apos;Ivoire</option>
+                        <option value="FRANCE">France</option>
+                        <option value="BELGIQUE">Belgique</option>
+                        <option value="SUISSE">Suisse</option>
+                        <option value="CANADA">Canada</option>
+                        <option value="SÉNÉGAL">Sénégal</option>
+                        <option value="CÔTE D'IVOIRE">Côte d&apos;Ivoire</option>
                       </select>
                     </div>
                   </div>

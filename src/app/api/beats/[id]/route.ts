@@ -253,6 +253,20 @@ export async function PATCH(request: NextRequest, context: any) {
       data: updateData,
     });
 
+    // Incrémente totalBeats si le beat n'a jamais été publié et qu'il passe à PUBLISHED
+    const passeAPublished = updateData.status === "PUBLISHED";
+    const nAJamaisEtePublie = !beat.hasBeenPublished;
+    if (passeAPublished && nAJamaisEtePublie) {
+      await prisma.sellerProfile.update({
+        where: { userId: beat.sellerId },
+        data: { totalBeats: { increment: 1 } },
+      });
+      await prisma.beat.update({
+        where: { id },
+        data: { hasBeenPublished: true },
+      });
+    }
+
     return NextResponse.json({ beat: updated });
   } catch (error) {
     console.error("Update beat by id error:", error);

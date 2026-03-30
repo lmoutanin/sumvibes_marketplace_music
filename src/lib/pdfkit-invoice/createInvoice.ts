@@ -41,9 +41,17 @@ export interface InvoiceShipping {
   country: string;
 }
 
+export interface InvoiceSeller {
+  name: string;
+  address: string;
+  city: string;
+  country: string;
+}
+
 export interface Invoice {
   payment: InvoicePayment;
   shipping: InvoiceShipping;
+  seller: InvoiceSeller;
   items: InvoiceItem[];
 }
 
@@ -253,10 +261,10 @@ function drawBillingSection(doc: PDFKit.PDFDocument, invoice: Invoice, startY: n
 
   // Vendeur
   doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(10.5)
-    .text(SELLER.name, colLeft, TOP + 13, { lineBreak: false });
+    .text(invoice.seller.name, colLeft, TOP + 13, { lineBreak: false });
   doc.fillColor(C.smoke).font("Helvetica").fontSize(8.5)
-    .text(SELLER.address, colLeft, TOP + 27, { lineBreak: false })
-    .text(SELLER.city, colLeft, TOP + 39, { lineBreak: false });
+    .text(invoice.seller.address, colLeft, TOP + 27, { lineBreak: false })
+    .text(invoice.seller.city, colLeft, TOP + 39, { lineBreak: false });
 
   // Client
   doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(10.5)

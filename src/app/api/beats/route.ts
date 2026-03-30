@@ -414,6 +414,18 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Incrémente totalBeats si le beat est publié directement
+    if (beat.status === "PUBLISHED" && !beat.hasBeenPublished) {
+      await prisma.sellerProfile.update({
+        where: { userId: decoded.userId },
+        data: { totalBeats: { increment: 1 } },
+      });
+      await prisma.beat.update({
+        where: { id: beat.id },
+        data: { hasBeenPublished: true },
+      });
+    }
+
     return NextResponse.json({ beat }, { status: 201 });
   } catch (error) {
     console.error("POST /api/beats error:", error);

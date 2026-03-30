@@ -29,6 +29,7 @@ export async function GET(
             genres: true,
             verified: true,
             totalSales: true,
+            totalBeats: true,
             totalRevenue: true,
             averageRating: true,
             totalReviews: true,

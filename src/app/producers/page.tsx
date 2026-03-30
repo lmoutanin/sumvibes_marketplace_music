@@ -13,6 +13,8 @@ export default function ProducersPage() {
   const { producers, loading } = useProducers(searchQuery, selectedGenre);
   const [expandedGenres, setExpandedGenres] = useState<Set<string>>(new Set());
 
+  console.log("ProducersPage render",   producers  );
+
   const toggleExpandGenres = (e: React.MouseEvent, producerId: string) => {
     e.preventDefault();
     setExpandedGenres((prev) => {
@@ -121,6 +123,7 @@ export default function ProducersPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {producers.map((producer) => (
+                  
                   <Link
                     key={producer.id}
                     href={`/producers/${producer.user?.id || producer.id}`}
@@ -189,9 +192,7 @@ export default function ProducersPage() {
                           <Music className="w-4 h-4" />
                         </div>
                         <div className="font-bold">
-                          {producer.user?.beats
-                            ? producer.user.beats.length
-                            : producer._count?.beats || 0}
+                          {producer.totalBeats || 0}
                         </div>
                         <div className="text-xs text-slate-500">Beats</div>
                       </div>
@@ -200,7 +201,7 @@ export default function ProducersPage() {
                           <TrendingUp className="w-4 h-4" />
                         </div>
                         <div className="font-bold">
-                          {producer._count?.sales || 0}
+                          {producer.totalSales || 0}
                         </div>
                         <div className="text-xs text-slate-500">Ventes</div>
                       </div>

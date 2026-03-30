@@ -52,6 +52,7 @@ interface Producer {
     genres: string[];
     verified: boolean;
     totalSales: number;
+    totalBeats: number;
     totalRevenue: number;
     averageRating: number | null;
     totalReviews: number;
@@ -300,7 +301,7 @@ export default function ProducerProfilePage({
                       )}
                       <span className="flex items-center gap-1">
                         <Music className="w-4 h-4 text-brand-gold" />
-                        {beats.length} beat{beats.length !== 1 ? "s" : ""}
+                        {profile?.totalBeats || 0} beat{profile?.totalBeats !== 1 ? "s" : ""}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
@@ -349,7 +350,7 @@ export default function ProducerProfilePage({
                 <h3 className="font-bold text-sm uppercase tracking-widest text-slate-500 mb-4">Statistiques</h3>
                 <div className="space-y-3">
                   {[
-                    { icon: Music, val: beats.length, label: "Beats publiés", color: "text-brand-gold" },
+                    { icon: Music, val: profile?.totalBeats || 0, label: "Beats publiés", color: "text-brand-gold" },
                     { icon: TrendingUp, val: profile?.totalSales ?? 0, label: "Ventes totales", color: "text-green-400" },
                     { icon: BarChart2, val: totalPlays > 999 ? `${(totalPlays / 1000).toFixed(1)}K` : totalPlays, label: "Écoutes", color: "text-blue-400" },
                   ].map(({ icon: Icon, val, label, color }) => (
